@@ -5,6 +5,7 @@ const db = require('../db');
 const {
   notifyNewBulkInquiry,
   notifyNewSupportMessage,
+  notifyNewFeedback,
   notifyNewWaitlistSignup,
 } = require('../services/emailService');
 
@@ -122,10 +123,11 @@ router.post(
 
     const { name, email, use_case, feedback, testimonial_permission } = req.body;
     try {
-      await db.query(
+      const { rows: [fb] } = await db.query(
         `INSERT INTO feedback_messages
            (name, email, usage_context, message, may_contact, may_use_as_testimonial)
-         VALUES ($1, $2, $3, $4, $5, $5)`,
+         VALUES ($1, $2, $3, $4, $5, $5)
+         RETURNING *`,
         [
           name || null,
           email || null,
@@ -134,6 +136,7 @@ router.post(
           testimonial_permission === 'yes',
         ]
       );
+      notifyNewFeedback(fb).catch(() => {});
       res.redirect('/?submitted=feedback#support');
     } catch (err) {
       next(err);

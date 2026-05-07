@@ -1,64 +1,97 @@
-const nodemailer = require('nodemailer');
-const config = require('../config');
+const { Resend } = require('resend');
 
-let transporter = null;
+let _resend = null;
 
-function getTransporter() {
-  if (!config.email.enabled) return null;
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: config.email.smtp.host,
-      port: config.email.smtp.port,
-      secure: config.email.smtp.port === 465,
-      auth: {
-        user: config.email.smtp.user,
-        pass: config.email.smtp.pass,
-      },
-    });
+function getResend() {
+  if (!_resend) {
+    _resend = new Resend(process.env.RESEND_API_KEY);
   }
-  return transporter;
+  return _resend;
 }
 
-async function sendOwnerNotification(subject, text) {
-  const t = getTransporter();
-  if (!t || !config.email.ownerEmail) return;
+const OWNER_EMAIL = () => process.env.OWNER_NOTIFICATION_EMAIL;
+// artcertify.store is the verified Resend domain on this account
+const FROM = 'Kavanah Pouch <noreply@artcertify.store>';
+
+async function sendOwnerNotification(subject, html) {
+  const to = OWNER_EMAIL();
+  if (!to || !process.env.RESEND_API_KEY) return;
   try {
-    await t.sendMail({
-      from: config.email.smtp.from,
-      to: config.email.ownerEmail,
+    const { error } = await getResend().emails.send({
+      from: FROM,
+      to: [to],
+      replyTo: 'support@kavanahpouch.com',
       subject,
-      text,
+      html,
     });
+    if (error) console.error('Email send error:', error.message);
   } catch (err) {
     console.error('Email send error:', err.message);
   }
 }
 
+function text(str) {
+  return str.replace(/\n/g, '<br>');
+}
+
 async function notifyNewOrder(order) {
+  const total = (order.total_cents / 100).toFixed(2);
   await sendOwnerNotification(
-    `New order ${order.order_number} — $${(order.total_cents / 100).toFixed(2)}`,
-    `New paid order received!\n\nOrder: ${order.order_number}\nCustomer: ${order.customer_name} <${order.customer_email}>\nTotal: $${(order.total_cents / 100).toFixed(2)}\n\nLog in to your dashboard to view and fulfill.`
+    `New order ${order.order_number} — $${total}`,
+    `<p><strong>New paid order received!</strong></p>
+     <p>Order: ${order.order_number}<br>
+     Customer: ${order.customer_name} &lt;${order.customer_email}&gt;<br>
+     Total: $${total}</p>
+     <p><a href="https://kavanahpouch.com/admin/orders/${order.id}">View order in dashboard</a></p>`
   );
 }
 
 async function notifyNewBulkInquiry(inquiry) {
   await sendOwnerNotification(
     `New bulk inquiry from ${inquiry.name}`,
-    `New bulk order inquiry!\n\nName: ${inquiry.name}\nEmail: ${inquiry.email}\nOrganization: ${inquiry.organization_name || 'N/A'}\nQuantity: ${inquiry.quantity_requested || 'Not specified'}\n\nMessage:\n${inquiry.message || '—'}`
+    `<p><strong>New bulk order inquiry!</strong></p>
+     <p>Name: ${inquiry.name}<br>
+     Email: ${inquiry.email}<br>
+     Organization: ${inquiry.organization_name || 'N/A'}<br>
+     Quantity: ${inquiry.quantity_requested || 'Not specified'}</p>
+     <p>Message:<br>${text(inquiry.message || '—')}</p>
+     <p><a href="https://kavanahpouch.com/admin/bulk-inquiries">View in dashboard</a></p>`
   );
 }
 
 async function notifyNewSupportMessage(msg) {
   await sendOwnerNotification(
     `New support message from ${msg.email}`,
-    `New support message!\n\nName: ${msg.name || 'N/A'}\nEmail: ${msg.email}\nTopic: ${msg.category || 'N/A'}\n\nMessage:\n${msg.message}`
+    `<p><strong>New support message!</strong></p>
+     <p>Name: ${msg.name || 'N/A'}<br>
+     Email: ${msg.email}<br>
+     Topic: ${msg.category || 'N/A'}<br>
+     Order #: ${msg.order_number || 'N/A'}</p>
+     <p>Message:<br>${text(msg.message)}</p>
+     <p><a href="https://kavanahpouch.com/admin/support">View in dashboard</a></p>`
+  );
+}
+
+async function notifyNewFeedback(feedback) {
+  await sendOwnerNotification(
+    `New customer feedback${feedback.name ? ' from ' + feedback.name : ''}`,
+    `<p><strong>New feedback submitted!</strong></p>
+     <p>Name: ${feedback.name || 'Anonymous'}<br>
+     Email: ${feedback.email || 'N/A'}<br>
+     Use case: ${feedback.usage_context || 'N/A'}<br>
+     May use as testimonial: ${feedback.may_use_as_testimonial ? 'Yes' : 'No'}</p>
+     <p>Feedback:<br>${text(feedback.message)}</p>
+     <p><a href="https://kavanahpouch.com/admin/feedback">View in dashboard</a></p>`
   );
 }
 
 async function notifyNewWaitlistSignup(signup) {
   await sendOwnerNotification(
     `New waitlist signup: ${signup.email}`,
-    `New waitlist signup!\n\nEmail: ${signup.email}\nName: ${signup.name || 'N/A'}\nInterest: ${signup.interest_type || 'N/A'}`
+    `<p><strong>New waitlist signup!</strong></p>
+     <p>Email: ${signup.email}<br>
+     Name: ${signup.name || 'N/A'}<br>
+     Interest: ${signup.interest_type || 'N/A'}</p>`
   );
 }
 
@@ -66,5 +99,6 @@ module.exports = {
   notifyNewOrder,
   notifyNewBulkInquiry,
   notifyNewSupportMessage,
+  notifyNewFeedback,
   notifyNewWaitlistSignup,
 };

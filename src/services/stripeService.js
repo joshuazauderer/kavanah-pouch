@@ -13,6 +13,9 @@ async function createCheckoutSession(priceKey) {
     shipping_address_collection: {
       allowed_countries: ['US', 'CA'],
     },
+    payment_intent_data: {
+      statement_descriptor: 'KAVANAHPOUCH.COM',
+    },
     metadata: { priceKey },
     success_url: `${config.appBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${config.appBaseUrl}/#buy`,
