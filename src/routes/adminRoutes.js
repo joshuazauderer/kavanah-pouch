@@ -31,7 +31,7 @@ router.get('/admin/login', (req, res) => {
 router.post(
   '/admin/login',
   loginLimiter,
-  body('email').isEmail().normalizeEmail(),
+  body('email').isEmail().toLowerCase(),
   body('password').notEmpty(),
   async (req, res) => {
     const errors = validationResult(req);

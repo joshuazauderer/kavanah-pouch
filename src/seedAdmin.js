@@ -4,7 +4,7 @@ const { query } = require('./db');
 const config = require('./config');
 
 async function seedAdmin() {
-  const email = process.env.ADMIN_EMAIL;
+  const email = (process.env.ADMIN_EMAIL || '').toLowerCase();
   const password = process.env.ADMIN_INITIAL_PASSWORD;
 
   if (!email || !password) {
