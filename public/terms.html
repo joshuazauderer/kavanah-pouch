@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Terms & Refund Policy | Kavanah Pouch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .legal-page { max-width: 760px; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+    .legal-page h1 { font-family: var(--serif); font-size: clamp(2.4rem,5vw,3.8rem); margin-bottom: 0.4rem; }
+    .legal-page .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 2.5rem; }
+    .legal-page h2 { font-size: 1.2rem; margin: 2rem 0 0.5rem; }
+    .legal-page p, .legal-page li { color: var(--muted); line-height: 1.7; }
+    .legal-page ul { padding-left: 1.4rem; }
+    .legal-page a { color: var(--gold-dark); text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Kavanah Pouch home">
+        <span class="brand-text"><span>Kavanah</span><span>Pouch</span></span>
+      </a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="/#buy">Buy Now</a>
+        <a href="/#support">Support</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="legal-page">
+      <h1>Terms &amp; Refund Policy</h1>
+      <p class="meta">Last updated: 2025</p>
+
+      <h2>Product Description</h2>
+      <p>Kavanah Pouch is a signal-blocking phone pouch designed to block wireless signals when properly closed, helping reduce distractions during davening. Signal-blocking performance depends on proper closure, device type, carrier, and environment. Results may vary.</p>
+      <p>The pouch is designed to block normal wireless signals (cellular, Wi-Fi, Bluetooth) while properly sealed. We do not guarantee 100% signal blocking in all situations, with all devices, or in all environments.</p>
+
+      <h2>Orders</h2>
+      <p>All orders are subject to availability. We reserve the right to cancel orders if inventory is unavailable or payment cannot be verified. You will receive an email confirmation and receipt from Stripe upon successful payment.</p>
+
+      <h2>Shipping</h2>
+      <p>We ship orders via USPS to US addresses. Estimated delivery times are provided at checkout and may vary. We are not responsible for carrier delays outside our control. Tracking information will be provided when your order ships.</p>
+
+      <h2>Returns &amp; Refunds</h2>
+      <ul>
+        <li>We accept return requests within 30 days of delivery for unused, unopened items.</li>
+        <li>To initiate a return, contact us at <a href="mailto:support@kavanahpouch.com">support@kavanahpouch.com</a> with your order number.</li>
+        <li>Return shipping costs are the responsibility of the customer unless the item arrived defective or damaged.</li>
+        <li>Refunds are issued to the original payment method within 5–10 business days after we receive the return.</li>
+      </ul>
+
+      <h2>Defective or Damaged Items</h2>
+      <p>If your Kavanah Pouch arrives defective or damaged, contact us within 14 days of receipt with a description and photo. We will replace or refund the item at no additional cost to you.</p>
+
+      <h2>Bulk Orders</h2>
+      <p>Bulk orders for shuls, yeshivos, and organizations are handled separately through our bulk inquiry form. Terms for bulk orders are established individually and confirmed in writing before processing.</p>
+
+      <h2>Signal-Blocking Limitations</h2>
+      <p>Kavanah Pouch is designed to block wireless signals when properly closed. Performance depends on proper closure, the specific device, wireless carrier, and physical environment. We do not make guarantees about blocking in all situations. Users should verify the pouch is properly sealed before relying on it for signal blocking.</p>
+
+      <h2>Shabbos and Yom Tov</h2>
+      <p>Please consult your rav regarding any Shabbos or Yom Tov use of this product. We make no Halachic claims.</p>
+
+      <h2>Contact</h2>
+      <p>Questions? Email <a href="mailto:support@kavanahpouch.com">support@kavanahpouch.com</a>.</p>
+
+      <p style="margin-top:2.5rem;"><a href="/">&larr; Back to Kavanah Pouch</a></p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <p>© <span id="year"></span> Kavanah Pouch. All rights reserved.</p>
+    </div>
+  </footer>
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

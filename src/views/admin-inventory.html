@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Inventory | Kavanah Pouch Admin</title>
+  <style>
+    *{box-sizing:border-box}
+    :root{--navy:#001f42;--gold:#d6a23a;--cream:#f8f1df;--ink:#132133;--muted:#667085;--line:rgba(19,33,51,.12);--sidebar:220px}
+    body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f4f6f9;color:var(--ink);display:flex;min-height:100vh}
+    a{color:inherit;text-decoration:none}
+    .sidebar{width:var(--sidebar);background:var(--navy);color:var(--cream);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+    .sidebar-brand{padding:1.4rem 1.2rem 1rem;font-weight:800;font-size:1rem;letter-spacing:.04em;color:var(--gold);border-bottom:1px solid rgba(248,241,223,.12)}
+    .sidebar-nav a{display:flex;align-items:center;gap:.6rem;padding:.7rem 1.2rem;font-size:.88rem;font-weight:600;color:rgba(248,241,223,.78)}
+    .sidebar-nav a:hover,.sidebar-nav a.active{background:rgba(214,162,58,.14);color:var(--gold)}
+    .sidebar-nav a.active{border-left:3px solid var(--gold)}
+    .sidebar-footer{padding:1rem 1.2rem;border-top:1px solid rgba(248,241,223,.12)}
+    .sidebar-footer form button{background:none;border:none;color:rgba(248,241,223,.5);font:inherit;font-size:.82rem;cursor:pointer;padding:0}
+    .main{flex:1;overflow:auto}
+    .topbar{background:#fff;border-bottom:1px solid var(--line);padding:.9rem 1.6rem}
+    .topbar h1{margin:0;font-size:1.2rem;font-weight:800}
+    .content{padding:1.6rem;max-width:520px}
+    .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.6rem;box-shadow:0 2px 8px rgba(0,31,66,.05)}
+    .card h2{margin:0 0 1.2rem;font-size:1rem;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.06em}
+    .current-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem;padding:1rem;background:#f9fafb;border-radius:12px;border:1px solid var(--line)}
+    .current-qty{font-size:2.4rem;font-weight:800;color:var(--navy)}
+    .current-label{font-size:.82rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+    label{display:grid;gap:.3rem;font-size:.85rem;font-weight:700;color:var(--muted);margin-bottom:.75rem}
+    input{width:100%;border:1px solid var(--line);border-radius:10px;background:#f9fafb;color:var(--ink);padding:.65rem .8rem;font:inherit;outline:none}
+    input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(214,162,58,.18)}
+    .btn{padding:.7rem 1.4rem;border-radius:999px;font:inherit;font-weight:700;cursor:pointer;border:none;background:var(--gold);color:var(--navy);font-size:.9rem}
+    .btn:hover{background:#e0b353}
+    .alert{border-radius:10px;padding:.65rem 1rem;font-size:.85rem;margin-bottom:1rem}
+    .alert-success{background:#dcfce7;border:1px solid #86efac;color:#16a34a}
+    .alert-error{background:#fee2e2;border:1px solid #fca5a5;color:#dc2626}
+    .note{font-size:.82rem;color:var(--muted);margin-top:.5rem}
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-brand">⬡ Kavanah Pouch</div>
+    <nav class="sidebar-nav">
+      <a href="/admin">Dashboard</a>
+      <a href="/admin/orders">Orders</a>
+      <a href="/admin/inventory" class="active">Inventory</a>
+      <a href="/admin/waitlist">Waitlist</a>
+      <a href="/admin/bulk-inquiries">Bulk Inquiries</a>
+      <a href="/admin/support">Support</a>
+      <a href="/admin/feedback">Feedback</a>
+    </nav>
+    <div class="sidebar-footer">
+      <form method="POST" action="/admin/logout"><button type="submit">Sign out</button></form>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar"><h1>Inventory</h1></div>
+    <div class="content">
+      <div id="alert-area"></div>
+      <div class="card">
+        <h2>Kavanah Pouch Stock</h2>
+        <div class="current-row">
+          <div><div class="current-label">Available</div><div class="current-qty" id="current-qty">—</div></div>
+          <div><div class="current-label">Low Stock At</div><div class="current-qty" id="current-threshold">—</div></div>
+        </div>
+        <form method="POST" action="/admin/inventory" id="inv-form">
+          <label>Set Quantity Available
+            <input type="number" name="quantity_available" id="qty-input" min="0" required/>
+          </label>
+          <label>Low Stock Threshold
+            <input type="number" name="low_stock_threshold" id="thresh-input" min="0" required/>
+          </label>
+          <p class="note">When quantity reaches 0, the storefront will show the waitlist instead of buy buttons.</p>
+          <button class="btn" type="submit">Update Inventory</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const p = new URLSearchParams(location.search);
+    if(p.get('saved')==='1'){
+      document.getElementById('alert-area').innerHTML='<div class="alert alert-success">✓ Inventory updated.</div>';
+    }
+    if(p.get('error')){
+      document.getElementById('alert-area').innerHTML='<div class="alert alert-error">Error saving. Check values and try again.</div>';
+    }
+
+    fetch('/admin/api/inventory').then(r=>r.json()).then(inv=>{
+      if(!inv) return;
+      document.getElementById('current-qty').textContent = inv.quantity_available;
+      document.getElementById('current-threshold').textContent = inv.low_stock_threshold;
+      document.getElementById('qty-input').value = inv.quantity_available;
+      document.getElementById('thresh-input').value = inv.low_stock_threshold;
+    });
+  </script>
+</body>
+</html>

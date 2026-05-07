@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Order Detail | Kavanah Pouch Admin</title>
+  <style>
+    *{box-sizing:border-box}
+    :root{--navy:#001f42;--gold:#d6a23a;--cream:#f8f1df;--ink:#132133;--muted:#667085;--line:rgba(19,33,51,.12);--sidebar:220px}
+    body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f4f6f9;color:var(--ink);display:flex;min-height:100vh}
+    a{color:inherit;text-decoration:none}
+    .sidebar{width:var(--sidebar);background:var(--navy);color:var(--cream);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+    .sidebar-brand{padding:1.4rem 1.2rem 1rem;font-weight:800;font-size:1rem;letter-spacing:.04em;color:var(--gold);border-bottom:1px solid rgba(248,241,223,.12)}
+    .sidebar-nav a{display:flex;align-items:center;gap:.6rem;padding:.7rem 1.2rem;font-size:.88rem;font-weight:600;color:rgba(248,241,223,.78)}
+    .sidebar-nav a:hover,.sidebar-nav a.active{background:rgba(214,162,58,.14);color:var(--gold)}
+    .sidebar-nav a.active{border-left:3px solid var(--gold)}
+    .sidebar-footer{padding:1rem 1.2rem;border-top:1px solid rgba(248,241,223,.12)}
+    .sidebar-footer form button{background:none;border:none;color:rgba(248,241,223,.5);font:inherit;font-size:.82rem;cursor:pointer;padding:0}
+    .main{flex:1;overflow:auto}
+    .topbar{background:#fff;border-bottom:1px solid var(--line);padding:.9rem 1.6rem;display:flex;align-items:center;gap:1rem}
+    .topbar h1{margin:0;font-size:1.2rem;font-weight:800}
+    .back-link{color:var(--gold);font-weight:700;font-size:.88rem}
+    .content{padding:1.6rem;display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+    .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,31,66,.05)}
+    .card h2{margin:0 0 1rem;font-size:1rem;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.06em}
+    .field{display:grid;grid-template-columns:140px 1fr;gap:.4rem .8rem;margin-bottom:.5rem;font-size:.88rem}
+    .field .k{color:var(--muted);font-weight:600}
+    .field .v{font-weight:500;word-break:break-all}
+    label{display:grid;gap:.3rem;font-size:.85rem;font-weight:700;color:var(--muted);margin-bottom:.75rem}
+    input,select{width:100%;border:1px solid var(--line);border-radius:10px;background:#f9fafb;color:var(--ink);padding:.65rem .8rem;font:inherit;outline:none}
+    input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(214,162,58,.18)}
+    .btn{padding:.6rem 1.2rem;border-radius:999px;font:inherit;font-size:.85rem;font-weight:700;cursor:pointer;border:none;transition:background 150ms}
+    .btn-gold{background:var(--gold);color:var(--navy)}
+    .btn-navy{background:var(--navy);color:var(--cream)}
+    .btn-navy:hover{background:#0a3060}
+    .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
+    .badge{display:inline-flex;padding:.25rem .6rem;border-radius:999px;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+    .badge-paid{background:#dcfce7;color:#16a34a}.badge-pending{background:#fef9c3;color:#854d0e}.badge-refunded{background:#fee2e2;color:#dc2626}
+    .badge-unfulfilled{background:#fef9c3;color:#854d0e}.badge-exported{background:#dbeafe;color:#1d4ed8}.badge-shipped{background:#dcfce7;color:#16a34a}.badge-canceled{background:#f3f4f6;color:#6b7280}
+    .alert{background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:.6rem 1rem;font-size:.85rem;color:#16a34a;margin-bottom:1rem}
+    .items-table{width:100%;border-collapse:collapse;font-size:.88rem}
+    .items-table th{text-align:left;padding:.5rem .6rem;font-size:.78rem;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+    .items-table td{padding:.6rem .6rem;border-bottom:1px solid var(--line)}
+    @media(max-width:900px){.content{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-brand">⬡ Kavanah Pouch</div>
+    <nav class="sidebar-nav">
+      <a href="/admin">Dashboard</a>
+      <a href="/admin/orders" class="active">Orders</a>
+      <a href="/admin/inventory">Inventory</a>
+      <a href="/admin/waitlist">Waitlist</a>
+      <a href="/admin/bulk-inquiries">Bulk Inquiries</a>
+      <a href="/admin/support">Support</a>
+      <a href="/admin/feedback">Feedback</a>
+    </nav>
+    <div class="sidebar-footer">
+      <form method="POST" action="/admin/logout"><button type="submit">Sign out</button></form>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <a class="back-link" href="/admin/orders">← Orders</a>
+      <h1 id="order-title">Order</h1>
+    </div>
+    <div class="content" id="content">
+      <div class="card"><p style="color:var(--muted)">Loading…</p></div>
+    </div>
+  </div>
+
+  <script>
+    const id = location.pathname.split('/').pop();
+    const p = new URLSearchParams(location.search);
+    const payMap={paid:'badge-paid',pending:'badge-pending',refunded:'badge-refunded',failed:'badge-refunded',canceled:'badge-canceled'};
+    const fulMap={unfulfilled:'badge-unfulfilled',exported:'badge-exported',shipped:'badge-shipped',canceled:'badge-canceled'};
+    function badge(val,map){ return `<span class="badge ${map[val]||''}">${val}</span>`; }
+    function fmt(c){ return c!=null?'$'+(c/100).toFixed(2):'—'; }
+    function fmtDate(d){ return d?new Date(d).toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'}):'—'; }
+    function f(v){ return v||'—'; }
+
+    fetch(`/admin/api/orders/${id}`).then(r=>r.json()).then(o=>{
+      document.getElementById('order-title').textContent = o.order_number;
+      const saved = p.get('saved')?'<div class="alert">✓ Saved successfully.</div>':'';
+      document.getElementById('content').innerHTML = `
+        ${saved?`<div style="grid-column:1/-1">${saved}</div>`:''}
+        <div>
+          <div class="card" style="margin-bottom:1.2rem">
+            <h2>Customer</h2>
+            <div class="field"><span class="k">Name</span><span class="v">${f(o.customer_name)}</span></div>
+            <div class="field"><span class="k">Email</span><span class="v">${f(o.customer_email)}</span></div>
+            <div class="field"><span class="k">Phone</span><span class="v">${f(o.phone)}</span></div>
+          </div>
+          <div class="card" style="margin-bottom:1.2rem">
+            <h2>Shipping Address</h2>
+            <div class="field"><span class="k">Name</span><span class="v">${f(o.shipping_name)}</span></div>
+            <div class="field"><span class="k">Address</span><span class="v">${f(o.shipping_address_line1)}${o.shipping_address_line2?'<br>'+o.shipping_address_line2:''}</span></div>
+            <div class="field"><span class="k">City/State/Zip</span><span class="v">${[o.shipping_city,o.shipping_state,o.shipping_postal_code].filter(Boolean).join(', ')}</span></div>
+            <div class="field"><span class="k">Country</span><span class="v">${f(o.shipping_country)}</span></div>
+          </div>
+          <div class="card">
+            <h2>Items</h2>
+            <table class="items-table">
+              <thead><tr><th>Item</th><th>Pouches</th><th>Amount</th></tr></thead>
+              <tbody>${(o.items||[]).map(i=>`<tr><td>${i.name}</td><td>${i.quantity_pouches}</td><td>${fmt(i.total_amount_cents)}</td></tr>`).join('')||'<tr><td colspan="3" style="color:var(--muted)">No items</td></tr>'}</tbody>
+            </table>
+            <div style="margin-top:.8rem;font-size:.88rem;text-align:right">
+              <strong>Total: ${fmt(o.total_cents)}</strong>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:1.2rem">
+            <h2>Status</h2>
+            <div class="field"><span class="k">Payment</span><span class="v">${badge(o.payment_status,payMap)}</span></div>
+            <div class="field"><span class="k">Fulfillment</span><span class="v">${badge(o.fulfillment_status,fulMap)}</span></div>
+            <div class="field"><span class="k">Created</span><span class="v">${fmtDate(o.created_at)}</span></div>
+            <div class="field"><span class="k">Updated</span><span class="v">${fmtDate(o.updated_at)}</span></div>
+            <hr style="border:none;border-top:1px solid var(--line);margin:1rem 0">
+            <form method="POST" action="/admin/orders/${o.id}/status" style="display:grid;gap:.75rem">
+              <label>Fulfillment Status
+                <select name="fulfillment_status">
+                  ${['unfulfilled','exported','shipped','canceled'].map(s=>`<option value="${s}" ${o.fulfillment_status===s?'selected':''}>${s}</option>`).join('')}
+                </select>
+              </label>
+              <button class="btn btn-navy" type="submit">Update Status</button>
+            </form>
+          </div>
+          <div class="card" style="margin-bottom:1.2rem">
+            <h2>Tracking</h2>
+            <form method="POST" action="/admin/orders/${o.id}/tracking" style="display:grid;gap:.75rem">
+              <label>Tracking Number <input name="tracking_number" value="${o.tracking_number||''}"/></label>
+              <label>Carrier
+                <select name="tracking_carrier">
+                  ${['USPS','UPS','FedEx','DHL','Other'].map(c=>`<option ${(o.tracking_carrier||'USPS')===c?'selected':''}>${c}</option>`).join('')}
+                </select>
+              </label>
+              <label>Tracking URL <input name="tracking_url" type="url" value="${o.tracking_url||''}"/></label>
+              <button class="btn btn-gold" type="submit">Save Tracking</button>
+            </form>
+          </div>
+          <div class="card">
+            <h2>Stripe IDs</h2>
+            <div class="field"><span class="k">Session</span><span class="v" style="font-size:.78rem">${f(o.stripe_checkout_session_id)}</span></div>
+            <div class="field"><span class="k">Payment Intent</span><span class="v" style="font-size:.78rem">${f(o.stripe_payment_intent_id)}</span></div>
+          </div>
+        </div>`;
+    }).catch(()=>{
+      document.getElementById('content').innerHTML='<div class="card"><p style="color:red">Error loading order.</p></div>';
+    });
+  </script>
+</body>
+</html>

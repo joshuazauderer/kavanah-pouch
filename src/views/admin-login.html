@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin Login | Kavanah Pouch</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#001f42;color:#f8f1df;display:grid;place-items:center;min-height:100vh;}
+    .card{background:rgba(248,241,223,.07);border:1px solid rgba(248,241,223,.16);border-radius:24px;padding:2.5rem;width:min(400px,calc(100%-2rem));box-shadow:0 24px 70px rgba(0,0,0,.3)}
+    h1{margin:0 0 .3rem;font-size:1.7rem;font-family:Georgia,serif}
+    .sub{color:rgba(248,241,223,.6);font-size:.9rem;margin:0 0 2rem}
+    label{display:grid;gap:.3rem;font-size:.88rem;font-weight:700;margin-bottom:1rem;color:rgba(248,241,223,.8)}
+    input{width:100%;border:1px solid rgba(248,241,223,.2);border-radius:10px;background:rgba(248,241,223,.08);color:#f8f1df;padding:.8rem .9rem;font:inherit;outline:none}
+    input:focus{border-color:#d6a23a;box-shadow:0 0 0 3px rgba(214,162,58,.2)}
+    .btn{width:100%;padding:.9rem;border:none;border-radius:999px;background:#d6a23a;color:#001f42;font:inherit;font-weight:800;cursor:pointer;margin-top:.5rem;transition:background 180ms}
+    .btn:hover{background:#e0b353}
+    .error{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:.75rem 1rem;font-size:.88rem;color:#fca5a5;margin-bottom:1rem}
+    .brand{text-align:center;margin-bottom:1.8rem;font-size:1.1rem;font-weight:700;color:#d6a23a;letter-spacing:.05em;text-transform:uppercase}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">Kavanah Pouch · Admin</div>
+    <h1>Sign in</h1>
+    <p class="sub">Dashboard access</p>
+    <div id="err-msg" class="error" style="display:none"></div>
+    <form method="POST" action="/admin/login">
+      <label>Email <input type="email" name="email" autocomplete="username" required autofocus/></label>
+      <label>Password <input type="password" name="password" autocomplete="current-password" required/></label>
+      <button class="btn" type="submit">Sign In</button>
+    </form>
+  </div>
+  <script>
+    const p = new URLSearchParams(location.search);
+    if(p.get('error')==='invalid'){
+      const el=document.getElementById('err-msg');
+      el.textContent='Invalid email or password.';
+      el.style.display='block';
+    }
+    if(p.get('error')==='server'){
+      const el=document.getElementById('err-msg');
+      el.textContent='Server error. Please try again.';
+      el.style.display='block';
+    }
+  </script>
+</body>
+</html>

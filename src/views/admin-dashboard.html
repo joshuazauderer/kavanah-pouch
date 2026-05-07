@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Dashboard | Kavanah Pouch Admin</title>
+  <style>
+    *{box-sizing:border-box}
+    :root{--navy:#001f42;--gold:#d6a23a;--cream:#f8f1df;--ink:#132133;--muted:#667085;--line:rgba(19,33,51,.12);--sidebar:220px}
+    body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f4f6f9;color:var(--ink);display:flex;min-height:100vh}
+    a{color:inherit;text-decoration:none}
+    /* Sidebar */
+    .sidebar{width:var(--sidebar);background:var(--navy);color:var(--cream);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+    .sidebar-brand{padding:1.4rem 1.2rem 1rem;font-weight:800;font-size:1rem;letter-spacing:.04em;color:var(--gold);border-bottom:1px solid rgba(248,241,223,.12)}
+    .sidebar-nav{padding:.5rem 0;flex:1}
+    .sidebar-nav a{display:flex;align-items:center;gap:.6rem;padding:.7rem 1.2rem;font-size:.88rem;font-weight:600;color:rgba(248,241,223,.78);transition:background 150ms,color 150ms}
+    .sidebar-nav a:hover,.sidebar-nav a.active{background:rgba(214,162,58,.14);color:var(--gold)}
+    .sidebar-nav a.active{border-left:3px solid var(--gold)}
+    .sidebar-footer{padding:1rem 1.2rem;border-top:1px solid rgba(248,241,223,.12)}
+    .sidebar-footer form button{background:none;border:none;color:rgba(248,241,223,.5);font:inherit;font-size:.82rem;cursor:pointer;padding:0}
+    .sidebar-footer form button:hover{color:var(--cream)}
+    /* Main */
+    .main{flex:1;overflow:auto}
+    .topbar{background:#fff;border-bottom:1px solid var(--line);padding:.9rem 1.6rem;display:flex;align-items:center;justify-content:space-between}
+    .topbar h1{margin:0;font-size:1.2rem;font-weight:800}
+    .content{padding:1.6rem}
+    /* Stats */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:1.6rem}
+    .stat-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.2rem 1.4rem;box-shadow:0 2px 8px rgba(0,31,66,.05)}
+    .stat-card .label{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.4rem}
+    .stat-card .value{font-size:2rem;font-weight:800;color:var(--navy)}
+    .stat-card.alert .value{color:#dc2626}
+    .stat-card.good .value{color:#16a34a}
+    /* Quick links */
+    .quick-links{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1rem}
+    .quick-links a{background:var(--navy);color:var(--cream);padding:.6rem 1.1rem;border-radius:999px;font-size:.85rem;font-weight:700;transition:background 150ms}
+    .quick-links a:hover{background:#0a3060}
+    .quick-links a.gold{background:var(--gold);color:var(--navy)}
+    .quick-links a.gold:hover{background:#e0b353}
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-brand">⬡ Kavanah Pouch</div>
+    <nav class="sidebar-nav">
+      <a href="/admin" class="active">Dashboard</a>
+      <a href="/admin/orders">Orders</a>
+      <a href="/admin/inventory">Inventory</a>
+      <a href="/admin/waitlist">Waitlist</a>
+      <a href="/admin/bulk-inquiries">Bulk Inquiries</a>
+      <a href="/admin/support">Support</a>
+      <a href="/admin/feedback">Feedback</a>
+    </nav>
+    <div class="sidebar-footer">
+      <form method="POST" action="/admin/logout"><button type="submit">Sign out</button></form>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar"><h1>Dashboard</h1><span id="admin-email" style="font-size:.85rem;color:var(--muted)"></span></div>
+    <div class="content">
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="label">Loading…</div><div class="value">—</div></div>
+      </div>
+      <div class="quick-links">
+        <a href="/admin/orders">View All Orders</a>
+        <a href="/admin/orders/export/pirate-ship.csv" class="gold">⬇ Export CSV (Pirate Ship)</a>
+        <a href="/admin/inventory">Update Inventory</a>
+        <a href="/admin/bulk-inquiries">Bulk Inquiries</a>
+        <a href="/admin/support">Support Messages</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    fetch('/admin/api/stats').then(r=>r.json()).then(s=>{
+      const grid = document.getElementById('stats-grid');
+      const cards = [
+        {label:'Total Paid Orders', value:s.total_paid, cls:''},
+        {label:'Unfulfilled', value:s.unfulfilled, cls: s.unfulfilled>0?'alert':''},
+        {label:'Exported (Pending Ship)', value:s.exported, cls:''},
+        {label:'Shipped', value:s.shipped, cls:s.shipped>0?'good':''},
+        {label:'Inventory Available', value:s.inventory, cls: s.inventory===0?'alert': s.inventory<=10?'alert':''},
+        {label:'Waitlist Signups', value:s.waitlist_count, cls:''},
+        {label:'New Bulk Inquiries', value:s.new_bulk_inquiries, cls:s.new_bulk_inquiries>0?'alert':''},
+        {label:'New Support Msgs', value:s.new_support_messages, cls:s.new_support_messages>0?'alert':''},
+      ];
+      grid.innerHTML = cards.map(c=>`
+        <div class="stat-card ${c.cls}">
+          <div class="label">${c.label}</div>
+          <div class="value">${c.value ?? '—'}</div>
+        </div>`).join('');
+    }).catch(()=>{
+      document.getElementById('stats-grid').innerHTML='<p style="color:red">Could not load stats.</p>';
+    });
+  </script>
+</body>
+</html>

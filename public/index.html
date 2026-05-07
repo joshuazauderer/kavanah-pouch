@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kavanah Pouch | Daven Without Distractions</title>
+  <meta name="description" content="Kavanah Pouch is a signal-blocking phone pouch designed to help you protect your kavanah during davening — in shul, at home, or anywhere you need to focus." />
+  <meta property="og:title" content="Kavanah Pouch | Daven Without Distractions" />
+  <meta property="og:description" content="A simple signal-blocking phone pouch for more focused davening." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kavanahpouch.com" />
+  <meta property="og:image" content="https://kavanahpouch.com/assets/og-image.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .sold-out-notice { display: none; }
+    .inventory-loading .buy-section-content { opacity: 0.5; pointer-events: none; }
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+      background: var(--navy); color: var(--cream); padding: 1rem 1.5rem;
+      border-radius: 999px; font-weight: 700; z-index: 9999;
+      transition: transform 300ms ease; box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="toast" id="toast"></div>
+
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a class="brand" href="#top" aria-label="Kavanah Pouch home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 96 120" role="img" focusable="false">
+            <path d="M48 8c20.5 0 37 16.9 37 37.7v5.1c4.1 2.3 5.6 8.1 2 12.2v32.3C87 105.4 79 113 68.7 113H27.3C17 113 9 105.4 9 95.3V63c-3.6-4.1-2.1-9.9 2-12.2v-5.1C11 24.9 27.5 8 48 8Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+            <circle cx="48" cy="28" r="8" fill="none" stroke="var(--gold)" stroke-width="5"/>
+            <rect x="32" y="55" width="28" height="43" rx="5" fill="none" stroke="var(--gold)" stroke-width="5"/>
+            <rect x="38" y="63" width="18" height="24" rx="2" fill="var(--cream)"/>
+            <circle cx="46" cy="93" r="2.6" fill="var(--gold)"/>
+            <path d="M21 60c-6 10-6 22 0 32M75 60c6 10 6 22 0 32M27 66c-3.8 6.6-3.8 14.8 0 21.4M69 66c3.8 6.6 3.8 14.8 0 21.4" fill="none" stroke="var(--gold)" stroke-width="4" stroke-linecap="round"/>
+            <path d="M24 52l49 52" stroke="var(--gold)" stroke-width="6" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <span>Kavanah</span>
+          <span>Pouch</span>
+        </span>
+      </a>
+
+      <button class="mobile-menu-button" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr-only">Open navigation</span>
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+        <a href="#how-it-works">How It Works</a>
+        <a href="#shuls">For Shuls</a>
+        <a href="#faq">FAQ</a>
+        <a href="#support">Support</a>
+        <a class="nav-cta" href="#buy">Buy Now</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero section-navy">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Signal-Blocking Phone Pouch</p>
+          <h1>Daven Without Distractions</h1>
+          <p class="hero-lede">A simple phone pouch designed to help you protect your kavanah during davening — in shul, at home, or anywhere you need to focus.</p>
+          <div class="hero-actions">
+            <a class="button button-gold" href="#buy">Buy Kavanah Pouch</a>
+            <a class="button button-outline" href="#video">Watch How It Works</a>
+          </div>
+          <ul class="hero-points" aria-label="Key benefits">
+            <li>No settings to change</li>
+            <li>No app to install</li>
+            <li>Just place, close, and daven</li>
+          </ul>
+        </div>
+
+        <div class="hero-card" aria-label="Kavanah Pouch product illustration">
+          <div class="pouch-illustration">
+            <svg viewBox="0 0 300 430" role="img" aria-labelledby="pouch-title pouch-desc">
+              <title id="pouch-title">Kavanah Pouch illustration</title>
+              <desc id="pouch-desc">A navy signal-blocking phone pouch with gold and cream accents.</desc>
+              <defs>
+                <linearGradient id="pouchGradient" x1="0" x2="1" y1="0" y2="1">
+                  <stop offset="0" stop-color="#062a50"/>
+                  <stop offset="1" stop-color="#001b38"/>
+                </linearGradient>
+              </defs>
+              <path d="M150 18c62 0 112 50 112 112v18c10 8 10 24 0 32v155c0 41-33 74-74 74H112c-41 0-74-33-74-74V180c-10-8-10-24 0-32v-18C38 68 88 18 150 18Z" fill="url(#pouchGradient)" stroke="#f8f1df" stroke-width="12" stroke-linejoin="round"/>
+              <circle cx="150" cy="78" r="22" fill="none" stroke="#d6a23a" stroke-width="12"/>
+              <rect x="104" y="156" width="84" height="124" rx="13" fill="none" stroke="#d6a23a" stroke-width="12"/>
+              <rect x="123" y="180" width="48" height="70" rx="5" fill="#f8f1df"/>
+              <circle cx="146" cy="262" r="7" fill="#d6a23a"/>
+              <path d="M79 161c-26 40-26 83 0 123M221 161c26 40 26 83 0 123M94 181c-15 26-15 57 0 83M206 181c15 26 15 57 0 83" fill="none" stroke="#d6a23a" stroke-width="10" stroke-linecap="round"/>
+              <path d="M84 142l143 154" stroke="#d6a23a" stroke-width="14" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="hero-card-caption">
+            <span class="caption-line"></span>
+            <strong>Protect Your Kavanah</strong>
+            <span class="caption-line"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="intro-strip" aria-label="Short product promise">
+      <div class="container intro-strip-inner">
+        <p>Prayer is a time to speak to Hashem. Kavanah Pouch helps create a quiet boundary between you and your phone.</p>
+      </div>
+    </section>
+
+    <section class="section section-cream" id="video">
+      <div class="container split-grid align-center">
+        <div class="video-frame">
+          <button class="play-placeholder" type="button" aria-label="Video placeholder">
+            <span class="play-icon">▶</span>
+          </button>
+          <div class="video-placeholder-text">
+            <strong>30–60 Second Product Video</strong>
+            <span>Show the pouch before davening in shul and at home.</span>
+          </div>
+        </div>
+        <div class="section-copy">
+          <p class="eyebrow dark">How It Helps</p>
+          <h2>A small pouch. A big difference in kavanah.</h2>
+          <p>Put your phone inside before davening, close the pouch, and step away from calls, texts, chats, notifications, and the habit of checking "just one thing."</p>
+          <p>No silent mode. No airplane mode. No settings to restore afterward.</p>
+          <a class="text-link" href="#how-it-works">See exactly how it works</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="why">
+      <div class="container">
+        <div class="section-heading centered">
+          <p class="eyebrow dark">Why Kavanah Pouch?</p>
+          <h2>Because davening deserves your full attention.</h2>
+          <p>Kavanah means intention — the direction of the heart. Kavanah Pouch was created to make it easier to put the phone away physically, mentally, and spiritually.</p>
+        </div>
+        <div class="benefit-grid">
+          <article class="benefit-card">
+            <span class="card-number">01</span>
+            <h3>No interruptions</h3>
+            <p>Calls, texts, chats, and app alerts stay away while your phone is inside the pouch.</p>
+          </article>
+          <article class="benefit-card">
+            <span class="card-number">02</span>
+            <h3>No settings to change</h3>
+            <p>You do not need to turn the phone off, put it on silent, enable airplane mode, or adjust notifications.</p>
+          </article>
+          <article class="benefit-card">
+            <span class="card-number">03</span>
+            <h3>Easy to return to normal</h3>
+            <p>When you remove the phone, it reconnects and keeps the same settings it had before.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-navy" id="how-it-works">
+      <div class="container">
+        <div class="section-heading centered narrow">
+          <p class="eyebrow">Simple Routine</p>
+          <h2>How It Works</h2>
+          <p>Designed to make the moment before davening simple and repeatable.</p>
+        </div>
+        <div class="steps-grid">
+          <article class="step-card">
+            <span>1</span>
+            <h3>Place your phone inside</h3>
+            <p>Before davening, put your phone into the Kavanah Pouch.</p>
+          </article>
+          <article class="step-card">
+            <span>2</span>
+            <h3>Close the pouch securely</h3>
+            <p>The pouch is designed to block wireless signals while properly closed.</p>
+          </article>
+          <article class="step-card">
+            <span>3</span>
+            <h3>Take it out after davening</h3>
+            <p>Your phone reconnects. No settings need to be restored.</p>
+          </article>
+        </div>
+        <div class="callout-box">
+          <h3>What happens if someone calls or texts while my phone is inside?</h3>
+          <p>While the phone is sealed inside the pouch, it is temporarily unreachable by normal wireless signals. A phone call may go to voicemail or show as unavailable, depending on the caller's carrier and your phone setup. Texts, chats, and app notifications usually wait until the phone reconnects.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-cream">
+      <div class="container">
+        <div class="section-heading centered">
+          <p class="eyebrow dark">Use Cases</p>
+          <h2>Made for the moments when focus matters most.</h2>
+        </div>
+        <div class="use-case-grid">
+          <article class="use-case-card">
+            <div class="use-case-icon" aria-hidden="true">✦</div>
+            <h3>For davening in shul</h3>
+            <p>You come to shul to daven, but the phone in your pocket keeps pulling your attention away. Even if it does not ring, you know it is there. Kavanah Pouch gives you a simple routine: phone in the pouch, pouch closed, mind back to davening.</p>
+          </article>
+          <article class="use-case-card">
+            <div class="use-case-icon" aria-hidden="true">✦</div>
+            <h3>For davening at home</h3>
+            <p>Davening at home can be even harder. The phone is nearby, notifications come in, and it is easy to get distracted. Kavanah Pouch helps create a small boundary, so davening time feels separate, calmer, and more focused.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- BUY SECTION -->
+    <section class="section" id="buy">
+      <div class="container">
+        <div class="section-heading centered narrow">
+          <p class="eyebrow dark">Buy Kavanah Pouch</p>
+          <h2>Choose the right option.</h2>
+          <p>Start with one for yourself, give a meaningful gift, or sponsor pouches for a shul or yeshiva.</p>
+        </div>
+
+        <!-- Sold-out banner (shown via JS when inventory = 0) -->
+        <div class="sold-out-notice callout-box" id="sold-out-banner" style="display:none; text-align:center; margin-bottom:2rem;">
+          <h3>Currently Sold Out</h3>
+          <p>Join the waitlist below and we will let you know when Kavanah Pouch is back in stock.</p>
+          <a class="button button-gold" href="#waitlist">Join Waitlist</a>
+        </div>
+
+        <div class="pricing-grid buy-section-content" id="buy-grid">
+          <article class="price-card">
+            <h3>1 Pouch</h3>
+            <p class="price">$14.99</p>
+            <p>Best for personal use and building a better davening routine.</p>
+            <form action="/api/checkout" method="POST">
+              <input type="hidden" name="priceKey" value="single" />
+              <button class="button button-dark full" type="submit">Buy 1 Pouch</button>
+            </form>
+          </article>
+          <article class="price-card featured">
+            <div class="badge">Recommended</div>
+            <h3>2-Pack</h3>
+            <p class="price">$24.99</p>
+            <p>A meaningful gift for a spouse, parent, child, chavrusa, or friend.</p>
+            <form action="/api/checkout" method="POST">
+              <input type="hidden" name="priceKey" value="two_pack" />
+              <button class="button button-gold full" type="submit">Buy 2-Pack</button>
+            </form>
+          </article>
+          <article class="price-card">
+            <h3>3-Pack</h3>
+            <p class="price">$34.99</p>
+            <p>Best value for family, gifts, and keeping one in more than one place.</p>
+            <form action="/api/checkout" method="POST">
+              <input type="hidden" name="priceKey" value="three_pack" />
+              <button class="button button-dark full" type="submit">Buy 3-Pack</button>
+            </form>
+          </article>
+        </div>
+        <p class="purchase-note">Free shipping on all US orders. Payment processed securely by Stripe. No account required.</p>
+      </div>
+    </section>
+
+    <section class="section section-navy" id="shuls">
+      <div class="container split-grid align-center reverse-on-mobile">
+        <div class="section-copy">
+          <p class="eyebrow">For Shuls &amp; Yeshivos</p>
+          <h2>Sponsor kavanah in your shul or yeshiva.</h2>
+          <p>Donate or dedicate Kavanah Pouches for a shul, yeshiva, camp, shiur, or minyan. Bulk options are ideal for Yomim Noraim, bar mitzvah projects, school campaigns, and meaningful dedications.</p>
+          <ul class="check-list">
+            <li>25, 50, or 100 pouch options</li>
+            <li>Great for shuls, yeshivos, camps, and minyanim</li>
+            <li>Dedication options available</li>
+          </ul>
+        </div>
+        <form class="form-card" action="/api/bulk-inquiry" method="post" id="bulk-form">
+          <input type="text" name="_hp" style="display:none" tabindex="-1" autocomplete="off">
+          <h3>Request Bulk Information</h3>
+          <label>
+            Name
+            <input type="text" name="name" autocomplete="name" required>
+          </label>
+          <label>
+            Email
+            <input type="email" name="email" autocomplete="email" required>
+          </label>
+          <label>
+            Organization / Shul / Yeshiva
+            <input type="text" name="organization">
+          </label>
+          <label>
+            Quantity Interested In
+            <select name="quantity">
+              <option value="25">25 pouches</option>
+              <option value="50">50 pouches</option>
+              <option value="100">100 pouches</option>
+              <option value="">Not sure yet</option>
+            </select>
+          </label>
+          <label>
+            Message
+            <textarea name="message" rows="4"></textarea>
+          </label>
+          <button class="button button-gold full" type="submit">Send Request</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="section section-cream" id="testimonials">
+      <div class="container">
+        <div class="section-heading centered narrow">
+          <p class="eyebrow dark">Testimonials</p>
+          <h2>What people are saying.</h2>
+        </div>
+        <div class="testimonial-grid">
+          <blockquote>
+            <p>"I did not realize how much my phone was affecting my davening until I physically put it away. The pouch made it simple."</p>
+            <cite>Early user</cite>
+          </blockquote>
+          <blockquote>
+            <p>"This is the kind of practical gift people actually use."</p>
+            <cite>Gift buyer</cite>
+          </blockquote>
+          <blockquote>
+            <p>"A simple idea that belongs in every shul."</p>
+            <cite>Shul member</cite>
+          </blockquote>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <div class="container narrow-container">
+        <div class="section-heading centered">
+          <p class="eyebrow dark">FAQ</p>
+          <h2>Questions before you order?</h2>
+        </div>
+        <div class="faq-list">
+          <details>
+            <summary>Do I need to turn off my phone first?</summary>
+            <p>No. You can leave your phone as-is. The pouch is designed so you do not need to change settings like silent, vibrate, or airplane mode.</p>
+          </details>
+          <details>
+            <summary>Will my phone ring inside the pouch?</summary>
+            <p>If the pouch is properly closed and blocking the signal as intended, the phone should not receive the incoming call in real time. Depending on your carrier and phone setup, the call may go to voicemail or appear as unavailable.</p>
+          </details>
+          <details>
+            <summary>Will I get my texts and notifications afterward?</summary>
+            <p>Usually, messages and notifications arrive after the phone reconnects, but exact behavior depends on the app, phone, carrier, and how long the phone was disconnected.</p>
+          </details>
+          <details>
+            <summary>Does this work better than silent mode?</summary>
+            <p>Silent mode stops sound. Kavanah Pouch creates a physical separation from the phone and is designed to block incoming wireless signals, so the phone is not actively receiving interruptions while inside.</p>
+          </details>
+          <details>
+            <summary>Can I use it on Shabbos or Yom Tov?</summary>
+            <p>Please ask your rav regarding any Shabbos or Yom Tov use. Kavanah Pouch is intended for weekday davening and general focus unless your rav advises otherwise.</p>
+          </details>
+          <details>
+            <summary>What phones fit?</summary>
+            <p>Kavanah Pouch fits most standard smartphones. Final fit dimensions will be updated after sample testing.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-cream" id="support">
+      <div class="container forms-grid">
+        <div class="section-copy">
+          <p class="eyebrow dark">Support &amp; Feedback</p>
+          <h2>We would love to help.</h2>
+          <p>Have a question about an order, shipping, product fit, or want to share feedback? Use the forms below.</p>
+        </div>
+        <form class="form-card light" action="/api/support" method="post" id="support-form">
+          <input type="text" name="_hp" style="display:none" tabindex="-1" autocomplete="off">
+          <h3>Contact Support</h3>
+          <label>
+            Name
+            <input type="text" name="name" autocomplete="name">
+          </label>
+          <label>
+            Email
+            <input type="email" name="email" autocomplete="email" required>
+          </label>
+          <label>
+            Topic
+            <select name="topic">
+              <option>Order question</option>
+              <option>Shipping / tracking</option>
+              <option>Product issue</option>
+              <option>Bulk order</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label>
+            Message
+            <textarea name="message" rows="5" required></textarea>
+          </label>
+          <button class="button button-dark full" type="submit">Send Message</button>
+        </form>
+        <form class="form-card light" action="/api/feedback" method="post" id="feedback-form">
+          <input type="text" name="_hp" style="display:none" tabindex="-1" autocomplete="off">
+          <h3>Share Feedback</h3>
+          <label>
+            Name
+            <input type="text" name="name" autocomplete="name">
+          </label>
+          <label>
+            Email
+            <input type="email" name="email" autocomplete="email">
+          </label>
+          <label>
+            How are you using it?
+            <select name="use_case">
+              <option>For myself</option>
+              <option>As a gift</option>
+              <option>For a shul or yeshiva</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label>
+            Feedback
+            <textarea name="feedback" rows="5" required></textarea>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="testimonial_permission" value="yes">
+            You may contact me about using this as a testimonial.
+          </label>
+          <button class="button button-dark full" type="submit">Send Feedback</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="waitlist section-navy" id="waitlist">
+      <div class="container waitlist-inner">
+        <div>
+          <p class="eyebrow">Get Notified</p>
+          <h2>Join the waitlist.</h2>
+          <p>Join the waitlist and we will let you know as soon as Kavanah Pouch is available or back in stock.</p>
+        </div>
+        <form class="waitlist-form" action="/api/waitlist" method="post" id="waitlist-form">
+          <input type="text" name="_hp" style="display:none" tabindex="-1" autocomplete="off">
+          <label class="sr-only" for="waitlist-email">Email address</label>
+          <input id="waitlist-email" type="email" name="email" placeholder="Email address" autocomplete="email" required>
+          <select name="interest" aria-label="Interest type">
+            <option value="personal">Personal use</option>
+            <option value="gift">Gift</option>
+            <option value="bulk">Shul / yeshiva bulk order</option>
+          </select>
+          <button class="button button-gold" type="submit">Notify Me</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a class="brand footer-brand" href="#top" aria-label="Kavanah Pouch home">
+          <span class="brand-text">
+            <span>Kavanah</span>
+            <span>Pouch</span>
+          </span>
+        </a>
+        <p>Daven without distractions. Protect your kavanah, one tefillah at a time.</p>
+      </div>
+      <div>
+        <h3>Shop</h3>
+        <a href="#buy">Buy Now</a>
+        <a href="#shuls">Bulk Orders</a>
+        <a href="#waitlist">Waitlist</a>
+      </div>
+      <div>
+        <h3>Help</h3>
+        <a href="#faq">FAQ</a>
+        <a href="#support">Support</a>
+        <a href="mailto:support@kavanahpouch.com">support@kavanahpouch.com</a>
+      </div>
+      <div>
+        <h3>Legal</h3>
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/terms">Terms &amp; Refund Policy</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>© <span id="year"></span> Kavanah Pouch. All rights reserved.</p>
+      <p>Signal-blocking performance depends on proper closure, device, carrier, and environment.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile nav
+    const menuButton = document.querySelector('.mobile-menu-button');
+    const nav = document.querySelector('.site-nav');
+    if (menuButton && nav) {
+      menuButton.addEventListener('click', () => {
+        const isOpen = nav.classList.toggle('is-open');
+        menuButton.setAttribute('aria-expanded', String(isOpen));
+      });
+    }
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Toast notification
+    function showToast(msg, duration = 4000) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), duration);
+    }
+
+    // Query-string submission feedback
+    const params = new URLSearchParams(location.search);
+    const submitted = params.get('submitted');
+    const toastMessages = {
+      waitlist: 'You are on the waitlist! We will be in touch.',
+      bulk: 'Bulk inquiry received. We will be in touch shortly.',
+      support: 'Support message sent. Thank you!',
+      feedback: 'Feedback received. Thank you!',
+      error: 'Something went wrong. Please try again.',
+    };
+    if (submitted && toastMessages[submitted]) {
+      showToast(toastMessages[submitted]);
+      history.replaceState({}, '', location.pathname + location.hash);
+    }
+
+    // Inventory-aware buy section
+    async function checkInventory() {
+      try {
+        const res = await fetch('/api/inventory-status');
+        const data = await res.json();
+        if (!data.available) {
+          document.getElementById('sold-out-banner').style.display = 'block';
+          const grid = document.getElementById('buy-grid');
+          if (grid) grid.style.display = 'none';
+        }
+      } catch (e) {
+        // If the check fails, show buy buttons (fail open)
+      }
+    }
+    checkInventory();
+  </script>
+</body>
+</html>

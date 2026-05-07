@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Orders | Kavanah Pouch Admin</title>
+  <style>
+    *{box-sizing:border-box}
+    :root{--navy:#001f42;--gold:#d6a23a;--cream:#f8f1df;--ink:#132133;--muted:#667085;--line:rgba(19,33,51,.12);--sidebar:220px}
+    body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f4f6f9;color:var(--ink);display:flex;min-height:100vh}
+    a{color:inherit;text-decoration:none}
+    .sidebar{width:var(--sidebar);background:var(--navy);color:var(--cream);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+    .sidebar-brand{padding:1.4rem 1.2rem 1rem;font-weight:800;font-size:1rem;letter-spacing:.04em;color:var(--gold);border-bottom:1px solid rgba(248,241,223,.12)}
+    .sidebar-nav a{display:flex;align-items:center;gap:.6rem;padding:.7rem 1.2rem;font-size:.88rem;font-weight:600;color:rgba(248,241,223,.78);transition:background 150ms,color 150ms}
+    .sidebar-nav a:hover,.sidebar-nav a.active{background:rgba(214,162,58,.14);color:var(--gold)}
+    .sidebar-nav a.active{border-left:3px solid var(--gold)}
+    .sidebar-footer{padding:1rem 1.2rem;border-top:1px solid rgba(248,241,223,.12)}
+    .sidebar-footer form button{background:none;border:none;color:rgba(248,241,223,.5);font:inherit;font-size:.82rem;cursor:pointer;padding:0}
+    .main{flex:1;overflow:auto}
+    .topbar{background:#fff;border-bottom:1px solid var(--line);padding:.9rem 1.6rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+    .topbar h1{margin:0;font-size:1.2rem;font-weight:800}
+    .topbar-actions{display:flex;gap:.75rem;flex-wrap:wrap;align-items:center}
+    .btn{padding:.55rem 1rem;border-radius:999px;font:inherit;font-size:.85rem;font-weight:700;cursor:pointer;border:none;transition:background 150ms}
+    .btn-gold{background:var(--gold);color:var(--navy)}
+    .btn-gold:hover{background:#e0b353}
+    .btn-navy{background:var(--navy);color:var(--cream)}
+    .btn-navy:hover{background:#0a3060}
+    .content{padding:1.6rem}
+    .filters{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+    .filter-btn{padding:.4rem .85rem;border-radius:999px;border:1px solid var(--line);background:#fff;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;color:var(--muted)}
+    .filter-btn.active{background:var(--navy);color:var(--cream);border-color:var(--navy)}
+    table{width:100%;border-collapse:collapse;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,31,66,.05)}
+    th{background:var(--navy);color:var(--cream);text-align:left;padding:.7rem 1rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700}
+    td{padding:.75rem 1rem;border-bottom:1px solid var(--line);font-size:.88rem;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:#f9fafb}
+    .badge{display:inline-flex;padding:.25rem .6rem;border-radius:999px;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+    .badge-paid{background:#dcfce7;color:#16a34a}
+    .badge-pending{background:#fef9c3;color:#854d0e}
+    .badge-refunded{background:#fee2e2;color:#dc2626}
+    .badge-unfulfilled{background:#fef9c3;color:#854d0e}
+    .badge-exported{background:#dbeafe;color:#1d4ed8}
+    .badge-shipped{background:#dcfce7;color:#16a34a}
+    .badge-canceled{background:#f3f4f6;color:#6b7280}
+    .action-link{color:var(--gold);font-weight:700;font-size:.82rem}
+    .empty{text-align:center;padding:3rem;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-brand">⬡ Kavanah Pouch</div>
+    <nav class="sidebar-nav">
+      <a href="/admin">Dashboard</a>
+      <a href="/admin/orders" class="active">Orders</a>
+      <a href="/admin/inventory">Inventory</a>
+      <a href="/admin/waitlist">Waitlist</a>
+      <a href="/admin/bulk-inquiries">Bulk Inquiries</a>
+      <a href="/admin/support">Support</a>
+      <a href="/admin/feedback">Feedback</a>
+    </nav>
+    <div class="sidebar-footer">
+      <form method="POST" action="/admin/logout"><button type="submit">Sign out</button></form>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <h1>Orders</h1>
+      <div class="topbar-actions">
+        <a href="/admin/orders/export/pirate-ship.csv" class="btn btn-gold">⬇ Export CSV (Pirate Ship)</a>
+      </div>
+    </div>
+    <div class="content">
+      <div class="filters" id="filters">
+        <button class="filter-btn active" data-filter="">All</button>
+        <button class="filter-btn" data-filter="unfulfilled">Unfulfilled</button>
+        <button class="filter-btn" data-filter="exported">Exported</button>
+        <button class="filter-btn" data-filter="shipped">Shipped</button>
+      </div>
+      <div id="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Order #</th><th>Date</th><th>Customer</th><th>Pouches</th>
+              <th>Total</th><th>Payment</th><th>Fulfillment</th><th>Tracking</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="orders-body"><tr><td colspan="9" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allOrders = [];
+    let activeFilter = '';
+
+    function fmt(cents){ return '$'+(cents/100).toFixed(2); }
+    function fmtDate(d){ return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+    function badge(val,map){ const cls=map[val]||''; return `<span class="badge ${cls}">${val}</span>`; }
+    const payMap={paid:'badge-paid',pending:'badge-pending',refunded:'badge-refunded',failed:'badge-refunded',canceled:'badge-canceled'};
+    const fulMap={unfulfilled:'badge-unfulfilled',exported:'badge-exported',shipped:'badge-shipped',canceled:'badge-canceled'};
+
+    function render(orders){
+      const tbody = document.getElementById('orders-body');
+      if(!orders.length){ tbody.innerHTML='<tr><td colspan="9" class="empty">No orders found.</td></tr>'; return; }
+      tbody.innerHTML = orders.map(o=>`
+        <tr>
+          <td><strong>${o.order_number}</strong></td>
+          <td>${fmtDate(o.created_at)}</td>
+          <td>${o.customer_name||''}<br><small style="color:var(--muted)">${o.customer_email}</small></td>
+          <td>${o.total_pouches||1}</td>
+          <td>${fmt(o.total_cents)}</td>
+          <td>${badge(o.payment_status,payMap)}</td>
+          <td>${badge(o.fulfillment_status,fulMap)}</td>
+          <td style="font-size:.8rem;max-width:120px;word-break:break-all">${o.tracking_number||'—'}</td>
+          <td><a class="action-link" href="/admin/orders/${o.id}">View →</a></td>
+        </tr>`).join('');
+    }
+
+    function applyFilter(f){
+      activeFilter = f;
+      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.toggle('active', b.dataset.filter===f));
+      render(f ? allOrders.filter(o=>o.fulfillment_status===f) : allOrders);
+    }
+
+    fetch('/admin/api/orders').then(r=>r.json()).then(orders=>{
+      allOrders = orders;
+      render(orders);
+    });
+
+    document.getElementById('filters').addEventListener('click', e=>{
+      if(e.target.matches('.filter-btn')) applyFilter(e.target.dataset.filter);
+    });
+  </script>
+</body>
+</html>

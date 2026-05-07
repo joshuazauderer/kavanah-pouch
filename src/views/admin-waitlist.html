@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Waitlist | Kavanah Pouch Admin</title>
+  <style>
+    *{box-sizing:border-box}
+    :root{--navy:#001f42;--gold:#d6a23a;--cream:#f8f1df;--ink:#132133;--muted:#667085;--line:rgba(19,33,51,.12);--sidebar:220px}
+    body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f4f6f9;color:var(--ink);display:flex;min-height:100vh}
+    a{color:inherit;text-decoration:none}
+    .sidebar{width:var(--sidebar);background:var(--navy);color:var(--cream);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+    .sidebar-brand{padding:1.4rem 1.2rem 1rem;font-weight:800;font-size:1rem;letter-spacing:.04em;color:var(--gold);border-bottom:1px solid rgba(248,241,223,.12)}
+    .sidebar-nav a{display:flex;align-items:center;gap:.6rem;padding:.7rem 1.2rem;font-size:.88rem;font-weight:600;color:rgba(248,241,223,.78)}
+    .sidebar-nav a:hover,.sidebar-nav a.active{background:rgba(214,162,58,.14);color:var(--gold)}
+    .sidebar-nav a.active{border-left:3px solid var(--gold)}
+    .sidebar-footer{padding:1rem 1.2rem;border-top:1px solid rgba(248,241,223,.12)}
+    .sidebar-footer form button{background:none;border:none;color:rgba(248,241,223,.5);font:inherit;font-size:.82rem;cursor:pointer;padding:0}
+    .main{flex:1;overflow:auto}
+    .topbar{background:#fff;border-bottom:1px solid var(--line);padding:.9rem 1.6rem;display:flex;align-items:center;justify-content:space-between}
+    .topbar h1{margin:0;font-size:1.2rem;font-weight:800}
+    .count{font-size:.85rem;color:var(--muted);font-weight:600}
+    .content{padding:1.6rem}
+    table{width:100%;border-collapse:collapse;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,31,66,.05)}
+    th{background:var(--navy);color:var(--cream);text-align:left;padding:.7rem 1rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700}
+    td{padding:.75rem 1rem;border-bottom:1px solid var(--line);font-size:.88rem;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:#f9fafb}
+    .badge{display:inline-flex;padding:.22rem .55rem;border-radius:999px;font-size:.74rem;font-weight:700;background:#e0f2fe;color:#0369a1}
+    .empty{text-align:center;padding:3rem;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-brand">⬡ Kavanah Pouch</div>
+    <nav class="sidebar-nav">
+      <a href="/admin">Dashboard</a>
+      <a href="/admin/orders">Orders</a>
+      <a href="/admin/inventory">Inventory</a>
+      <a href="/admin/waitlist" class="active">Waitlist</a>
+      <a href="/admin/bulk-inquiries">Bulk Inquiries</a>
+      <a href="/admin/support">Support</a>
+      <a href="/admin/feedback">Feedback</a>
+    </nav>
+    <div class="sidebar-footer">
+      <form method="POST" action="/admin/logout"><button type="submit">Sign out</button></form>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <h1>Waitlist</h1>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="content">
+      <table>
+        <thead><tr><th>Email</th><th>Name</th><th>Interest</th><th>Qty</th><th>Notified</th><th>Date</th></tr></thead>
+        <tbody id="tbody"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    function fmtDate(d){ return d?new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'; }
+    fetch('/admin/api/waitlist').then(r=>r.json()).then(rows=>{
+      document.getElementById('count').textContent = rows.length+' signups';
+      const tbody = document.getElementById('tbody');
+      if(!rows.length){ tbody.innerHTML='<tr><td colspan="6" class="empty">No waitlist signups yet.</td></tr>'; return; }
+      tbody.innerHTML = rows.map(r=>`<tr>
+        <td>${r.email}</td>
+        <td>${r.name||'—'}</td>
+        <td>${r.interest_type?`<span class="badge">${r.interest_type}</span>`:'—'}</td>
+        <td>${r.quantity_interested||'—'}</td>
+        <td>${r.notified_at?'✓ '+fmtDate(r.notified_at):'—'}</td>
+        <td>${fmtDate(r.created_at)}</td>
+      </tr>`).join('');
+    });
+  </script>
+</body>
+</html>
