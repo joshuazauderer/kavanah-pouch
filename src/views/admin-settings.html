@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Inventory | Kavanah Pouch Admin</title>
+  <title>Settings | Kavanah Pouch Admin</title>
   <style>
     *{box-sizing:border-box}
     :root{--navy:#001f42;--gold:#d6a23a;--cream:#f8f1df;--ink:#132133;--muted:#667085;--line:rgba(19,33,51,.12);--sidebar:220px}
@@ -21,18 +21,16 @@
     .content{padding:1.6rem;max-width:520px}
     .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.6rem;box-shadow:0 2px 8px rgba(0,31,66,.05)}
     .card h2{margin:0 0 1.2rem;font-size:1rem;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.06em}
-    .current-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem;padding:1rem;background:#f9fafb;border-radius:12px;border:1px solid var(--line)}
-    .current-qty{font-size:2.4rem;font-weight:800;color:var(--navy)}
-    .current-label{font-size:.82rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-    label{display:grid;gap:.3rem;font-size:.85rem;font-weight:700;color:var(--muted);margin-bottom:.75rem}
+    label{display:grid;gap:.3rem;font-size:.85rem;font-weight:700;color:var(--muted);margin-bottom:.85rem}
     input{width:100%;border:1px solid var(--line);border-radius:10px;background:#f9fafb;color:var(--ink);padding:.65rem .8rem;font:inherit;outline:none}
     input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(214,162,58,.18)}
-    .btn{padding:.7rem 1.4rem;border-radius:999px;font:inherit;font-weight:700;cursor:pointer;border:none;background:var(--gold);color:var(--navy);font-size:.9rem}
-    .btn:hover{background:#e0b353}
-    .alert{border-radius:10px;padding:.65rem 1rem;font-size:.85rem;margin-bottom:1rem}
+    .btn{padding:.65rem 1.4rem;border-radius:999px;font:inherit;font-size:.88rem;font-weight:700;cursor:pointer;border:none}
+    .btn-navy{background:var(--navy);color:var(--cream)}
+    .btn-navy:hover{background:#0a3060}
+    .alert{border-radius:10px;padding:.65rem 1rem;font-size:.85rem;font-weight:600;margin-bottom:1rem}
     .alert-success{background:#dcfce7;border:1px solid #86efac;color:#16a34a}
     .alert-error{background:#fee2e2;border:1px solid #fca5a5;color:#dc2626}
-    .note{font-size:.82rem;color:var(--muted);margin-top:.5rem}
+    .hint{font-size:.78rem;color:var(--muted);margin-top:.3rem;font-weight:400}
   </style>
 </head>
 <body>
@@ -41,12 +39,12 @@
     <nav class="sidebar-nav">
       <a href="/admin">Dashboard</a>
       <a href="/admin/orders">Orders</a>
-      <a href="/admin/inventory" class="active">Inventory</a>
+      <a href="/admin/inventory">Inventory</a>
       <a href="/admin/waitlist">Waitlist</a>
       <a href="/admin/bulk-inquiries">Bulk Inquiries</a>
       <a href="/admin/support">Support</a>
       <a href="/admin/feedback">Feedback</a>
-      <a href="/admin/settings">Settings</a>
+      <a href="/admin/settings" class="active">Settings</a>
     </nav>
     <div class="sidebar-footer">
       <form method="POST" action="/admin/logout"><button type="submit">Sign out</button></form>
@@ -54,24 +52,26 @@
   </aside>
 
   <div class="main">
-    <div class="topbar"><h1>Inventory</h1></div>
+    <div class="topbar"><h1>Settings</h1></div>
     <div class="content">
-      <div id="alert-area"></div>
       <div class="card">
-        <h2>Kavanah Pouch Stock</h2>
-        <div class="current-row">
-          <div><div class="current-label">Available</div><div class="current-qty" id="current-qty">—</div></div>
-          <div><div class="current-label">Low Stock At</div><div class="current-qty" id="current-threshold">—</div></div>
-        </div>
-        <form method="POST" action="/admin/inventory" id="inv-form">
-          <label>Set Quantity Available
-            <input type="number" name="quantity_available" id="qty-input" min="0" required/>
+        <h2>Change Password</h2>
+        <div id="alert" style="display:none" class="alert"></div>
+        <form method="POST" action="/admin/settings/change-password">
+          <label>
+            Current Password
+            <input type="password" name="current_password" autocomplete="current-password" required/>
           </label>
-          <label>Low Stock Threshold
-            <input type="number" name="low_stock_threshold" id="thresh-input" min="0" required/>
+          <label>
+            New Password
+            <input type="password" name="new_password" autocomplete="new-password" required minlength="8"/>
+            <span class="hint">Minimum 8 characters</span>
           </label>
-          <p class="note">When quantity reaches 0, the storefront will show the waitlist instead of buy buttons.</p>
-          <button class="btn" type="submit">Update Inventory</button>
+          <label>
+            Confirm New Password
+            <input type="password" name="confirm_password" autocomplete="new-password" required minlength="8"/>
+          </label>
+          <button class="btn btn-navy" type="submit">Update Password</button>
         </form>
       </div>
     </div>
@@ -79,20 +79,20 @@
 
   <script>
     const p = new URLSearchParams(location.search);
-    if(p.get('saved')==='1'){
-      document.getElementById('alert-area').innerHTML='<div class="alert alert-success">✓ Inventory updated.</div>';
+    const el = document.getElementById('alert');
+    const msgs = {
+      saved:    ['alert-success', '✓ Password updated successfully.'],
+      mismatch: ['alert-error',   'New passwords do not match.'],
+      wrong:    ['alert-error',   'Current password is incorrect.'],
+      invalid:  ['alert-error',   'New password must be at least 8 characters.'],
+      server:   ['alert-error',   'Server error — please try again.'],
+    };
+    const key = p.get('saved') ? 'saved' : p.get('error');
+    if (key && msgs[key]) {
+      el.className = 'alert ' + msgs[key][0];
+      el.textContent = msgs[key][1];
+      el.style.display = 'block';
     }
-    if(p.get('error')){
-      document.getElementById('alert-area').innerHTML='<div class="alert alert-error">Error saving. Check values and try again.</div>';
-    }
-
-    fetch('/admin/api/inventory').then(r=>r.json()).then(inv=>{
-      if(!inv) return;
-      document.getElementById('current-qty').textContent = inv.quantity_available;
-      document.getElementById('current-threshold').textContent = inv.low_stock_threshold;
-      document.getElementById('qty-input').value = inv.quantity_available;
-      document.getElementById('thresh-input').value = inv.low_stock_threshold;
-    });
   </script>
 </body>
 </html>

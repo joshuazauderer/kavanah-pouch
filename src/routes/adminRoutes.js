@@ -1,6 +1,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const path = require('path');
 const { body, validationResult } = require('express-validator');
 const db = require('../db');
@@ -11,7 +12,7 @@ const {
 } = require('../services/orderService');
 const { getInventory, setInventory } = require('../services/inventoryService');
 const { exportPirateShipCsv } = require('../services/csvService');
-const { sendOrderConfirmationEmail } = require('../services/emailService');
+const { sendOrderConfirmationEmail, sendPasswordResetEmail } = require('../services/emailService');
 
 const router = express.Router();
 
@@ -21,6 +22,14 @@ const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: 'Too many login attempts. Try again in 15 minutes.',
+});
+
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many requests. Try again in 15 minutes.',
 });
 
 // ── Login ─────────────────────────────────────────────────────────────────────
@@ -279,5 +288,148 @@ router.post('/admin/orders/:id/resend-confirmation', requireAdmin, async (req, r
     res.status(500).json({ error: err.message });
   }
 });
+
+// ── Settings (change password) ────────────────────────────────────────────────
+router.get('/admin/settings', requireAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, '../../src/views/admin-settings.html'));
+});
+
+router.post('/admin/settings/change-password', requireAdmin,
+  body('current_password').notEmpty(),
+  body('new_password').isLength({ min: 8 }),
+  body('confirm_password').notEmpty(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.redirect('/admin/settings?error=invalid');
+
+    const { current_password, new_password, confirm_password } = req.body;
+
+    if (new_password !== confirm_password) {
+      return res.redirect('/admin/settings?error=mismatch');
+    }
+
+    try {
+      const { rows: [user] } = await db.query(
+        'SELECT * FROM admin_users WHERE id = $1 LIMIT 1',
+        [req.session.adminId]
+      );
+      if (!user) return res.redirect('/admin/settings?error=invalid');
+
+      const match = await bcrypt.compare(current_password, user.password_hash);
+      if (!match) return res.redirect('/admin/settings?error=wrong');
+
+      const hash = await bcrypt.hash(new_password, 12);
+      await db.query(
+        'UPDATE admin_users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+        [hash, user.id]
+      );
+
+      res.redirect('/admin/settings?saved=1');
+    } catch (err) {
+      console.error('Change password error:', err.message);
+      res.redirect('/admin/settings?error=server');
+    }
+  }
+);
+
+// ── Forgot password ───────────────────────────────────────────────────────────
+router.get('/admin/forgot-password', (req, res) => {
+  if (req.session?.adminId) return res.redirect('/admin');
+  res.sendFile(path.join(__dirname, '../../src/views/admin-forgot-password.html'));
+});
+
+router.post('/admin/forgot-password', forgotPasswordLimiter, async (req, res) => {
+  const { email } = req.body;
+  // Always show success to prevent email enumeration
+  const successRedirect = () => res.redirect('/admin/forgot-password?sent=1');
+
+  if (!email) return successRedirect();
+
+  try {
+    const { rows: [user] } = await db.query(
+      'SELECT * FROM admin_users WHERE email = $1 LIMIT 1',
+      [email.toLowerCase().trim()]
+    );
+    if (!user) return successRedirect();
+
+    // Invalidate any existing unused tokens for this user
+    await db.query(
+      'UPDATE password_reset_tokens SET used = true WHERE admin_user_id = $1 AND used = false',
+      [user.id]
+    );
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await db.query(
+      'INSERT INTO password_reset_tokens (admin_user_id, token, expires_at) VALUES ($1, $2, $3)',
+      [user.id, token, expiresAt]
+    );
+
+    const baseUrl = process.env.APP_BASE_URL || 'https://kavanahpouch.com';
+    const resetUrl = `${baseUrl}/admin/reset-password/${token}`;
+
+    await sendPasswordResetEmail(user.email, resetUrl);
+  } catch (err) {
+    console.error('Forgot password error:', err.message);
+  }
+
+  successRedirect();
+});
+
+router.get('/admin/reset-password/:token', async (req, res) => {
+  if (req.session?.adminId) return res.redirect('/admin');
+  try {
+    const { rows: [record] } = await db.query(
+      `SELECT * FROM password_reset_tokens
+       WHERE token = $1 AND used = false AND expires_at > NOW() LIMIT 1`,
+      [req.params.token]
+    );
+    if (!record) return res.redirect('/admin/forgot-password?error=expired');
+    res.sendFile(path.join(__dirname, '../../src/views/admin-reset-password.html'));
+  } catch (err) {
+    res.redirect('/admin/forgot-password?error=server');
+  }
+});
+
+router.post('/admin/reset-password/:token',
+  body('new_password').isLength({ min: 8 }),
+  body('confirm_password').notEmpty(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.redirect(`/admin/reset-password/${req.params.token}?error=invalid`);
+    }
+
+    const { new_password, confirm_password } = req.body;
+    if (new_password !== confirm_password) {
+      return res.redirect(`/admin/reset-password/${req.params.token}?error=mismatch`);
+    }
+
+    try {
+      const { rows: [record] } = await db.query(
+        `SELECT * FROM password_reset_tokens
+         WHERE token = $1 AND used = false AND expires_at > NOW() LIMIT 1`,
+        [req.params.token]
+      );
+      if (!record) return res.redirect('/admin/forgot-password?error=expired');
+
+      const hash = await bcrypt.hash(new_password, 12);
+      await db.query(
+        'UPDATE admin_users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+        [hash, record.admin_user_id]
+      );
+      await db.query(
+        'UPDATE password_reset_tokens SET used = true WHERE id = $1',
+        [record.id]
+      );
+
+      res.redirect('/admin/login?reset=1');
+    } catch (err) {
+      console.error('Reset password error:', err.message);
+      res.redirect(`/admin/reset-password/${req.params.token}?error=server`);
+    }
+  }
+);
 
 module.exports = router;

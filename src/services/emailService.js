@@ -353,8 +353,64 @@ async function notifyNewWaitlistSignup(signup) {
   );
 }
 
+// ── Admin password reset email ────────────────────────────────────────────────
+async function sendPasswordResetEmail(toEmail, resetUrl) {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY not set — skipping password reset email');
+    return;
+  }
+  const supportEmail = SUPPORT_EMAIL();
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Reset Your Password</title>
+</head>
+<body style="margin:0;padding:0;background:#001f42;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#001f42;">
+    <tr>
+      <td align="center" style="padding:48px 16px;">
+        <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%;max-width:480px;background:rgba(248,241,223,.07);border:1px solid rgba(248,241,223,.16);border-radius:24px;">
+          <tr>
+            <td style="padding:36px 40px;text-align:center;">
+              <div style="font-size:14px;font-weight:800;color:#d6a23a;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">Kavanah Pouch · Admin</div>
+              <h1 style="margin:0 0 8px;font-size:1.5rem;color:#f8f1df;">Reset Your Password</h1>
+              <p style="margin:0 0 28px;font-size:.9rem;color:rgba(248,241,223,.6);">Click the button below to set a new password. This link expires in 1 hour.</p>
+              <a href="${escHtml(resetUrl)}" style="display:inline-block;background:#d6a23a;color:#001f42;font-weight:800;font-size:.95rem;padding:.85rem 2rem;border-radius:999px;text-decoration:none;">Reset Password</a>
+              <p style="margin:24px 0 0;font-size:.8rem;color:rgba(248,241,223,.4);">If you didn&#8217;t request this, ignore this email &#8212; your password won&#8217;t change.</p>
+              <p style="margin:8px 0 0;font-size:.8rem;color:rgba(248,241,223,.3);">Or copy this link: <span style="word-break:break-all;">${escHtml(resetUrl)}</span></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  const text = `Reset Your Kavanah Pouch Admin Password\n\nClick the link below to set a new password (expires in 1 hour):\n\n${resetUrl}\n\nIf you didn't request this, ignore this email.`;
+
+  try {
+    const { error } = await getResend().emails.send({
+      from:    FROM(),
+      to:      [toEmail],
+      replyTo: supportEmail,
+      subject: 'Reset your Kavanah Pouch admin password',
+      html,
+      text,
+    });
+    if (error) throw new Error(error.message || JSON.stringify(error));
+    console.log(`Password reset email sent to ${toEmail}`);
+  } catch (err) {
+    console.error('Password reset email failed:', err.message);
+    throw err;
+  }
+}
+
 module.exports = {
   sendOrderConfirmationEmail,
+  sendPasswordResetEmail,
   notifyNewOrder,
   notifyNewBulkInquiry,
   notifyNewSupportMessage,
