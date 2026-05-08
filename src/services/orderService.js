@@ -27,8 +27,12 @@ async function createOrderFromStripe(session) {
     const pouchesPerPack = config.stripe.pouchesPerPack;
     const quantityPouches = pouchesPerPack[priceKey] || 1;
 
-    const shipping = session.shipping_details || {};
-    const addr = shipping.address || {};
+    // Stripe moved the shipping address to collected_information.shipping_details in newer API versions.
+    // Fall back through the chain to handle both old and new webhook payloads.
+    const shipping = session.collected_information?.shipping_details
+      || session.shipping_details
+      || {};
+    const addr = shipping.address || session.customer_details?.address || {};
     const customerName = shipping.name || session.customer_details?.name || null;
 
     const orderNumber = generateOrderNumber();
