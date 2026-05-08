@@ -8,7 +8,7 @@ const db = require('../db');
 const { requireAdmin } = require('../middleware/adminAuth');
 const {
   getOrders, getOrderById, updateOrderTracking,
-  updateOrderStatus, getDashboardStats,
+  markOrderShipped, updateOrderStatus, getDashboardStats,
 } = require('../services/orderService');
 const { getInventory, setInventory } = require('../services/inventoryService');
 const { exportPirateShipCsv } = require('../services/csvService');
@@ -138,13 +138,45 @@ router.get('/admin/api/orders/:id', requireAdmin, async (req, res) => {
 
 router.post('/admin/orders/:id/tracking', requireAdmin, async (req, res) => {
   try {
-    const { tracking_number, tracking_carrier, tracking_url } = req.body;
-    const order = await updateOrderTracking(req.params.id, {
+    const {
       tracking_number, tracking_carrier, tracking_url,
+      shipping_service, shipped_at, admin_notes,
+    } = req.body;
+    await updateOrderTracking(req.params.id, {
+      tracking_number: tracking_number || null,
+      tracking_carrier: tracking_carrier || null,
+      tracking_url: tracking_url || null,
+      shipping_service: shipping_service || null,
+      shipped_at: shipped_at || null,
+      admin_notes: admin_notes || null,
     });
     res.redirect(`/admin/orders/${req.params.id}?saved=1`);
   } catch (err) {
+    console.error('Update tracking error:', err.message);
     res.redirect(`/admin/orders/${req.params.id}?error=1`);
+  }
+});
+
+// Mark an order as shipped (validates payment, required fields; does NOT send email)
+router.post('/admin/orders/:id/mark-shipped', requireAdmin, async (req, res) => {
+  try {
+    const { tracking_number, tracking_carrier, shipping_service, shipped_at, admin_notes } = req.body;
+    await markOrderShipped(req.params.id, {
+      tracking_number, tracking_carrier, shipping_service, shipped_at, admin_notes,
+    });
+    // Respond with JSON for the modal (called via fetch from orders list)
+    if (req.headers['content-type']?.includes('application/json') ||
+        req.headers['x-requested-with'] === 'XMLHttpRequest') {
+      return res.json({ ok: true });
+    }
+    res.redirect(`/admin/orders/${req.params.id}?saved=1`);
+  } catch (err) {
+    console.error('Mark shipped error:', err.message);
+    if (req.headers['content-type']?.includes('application/json') ||
+        req.headers['x-requested-with'] === 'XMLHttpRequest') {
+      return res.status(400).json({ error: err.message });
+    }
+    res.redirect(`/admin/orders/${req.params.id}?error=${encodeURIComponent(err.message)}`);
   }
 });
 

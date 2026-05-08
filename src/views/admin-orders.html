@@ -15,7 +15,7 @@
     .sidebar-nav a.active{border-left:3px solid var(--gold)}
     .sidebar-footer{padding:1rem 1.2rem;border-top:1px solid rgba(248,241,223,.12)}
     .sidebar-footer form button{background:none;border:none;color:rgba(248,241,223,.5);font:inherit;font-size:.82rem;cursor:pointer;padding:0}
-    .main{flex:1;overflow:auto}
+    .main{flex:1;overflow:auto;min-width:0}
     .topbar{background:#fff;border-bottom:1px solid var(--line);padding:.9rem 1.6rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
     .topbar h1{margin:0;font-size:1.2rem;font-weight:800}
     .topbar-actions{display:flex;gap:.75rem;flex-wrap:wrap;align-items:center}
@@ -24,16 +24,20 @@
     .btn-gold:hover{background:#e0b353}
     .btn-navy{background:var(--navy);color:var(--cream)}
     .btn-navy:hover{background:#0a3060}
+    .btn-sm{padding:.35rem .7rem;font-size:.78rem}
+    .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
+    .btn-ghost:hover{background:#f3f4f6}
     .content{padding:1.6rem}
     .filters{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
     .filter-btn{padding:.4rem .85rem;border-radius:999px;border:1px solid var(--line);background:#fff;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;color:var(--muted)}
     .filter-btn.active{background:var(--navy);color:var(--cream);border-color:var(--navy)}
-    table{width:100%;border-collapse:collapse;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,31,66,.05)}
-    th{background:var(--navy);color:var(--cream);text-align:left;padding:.7rem 1rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700}
-    td{padding:.75rem 1rem;border-bottom:1px solid var(--line);font-size:.88rem;vertical-align:middle}
+    .table-wrap{overflow-x:auto;border-radius:16px;box-shadow:0 2px 8px rgba(0,31,66,.05)}
+    table{width:100%;border-collapse:collapse;background:#fff;min-width:800px}
+    th{background:var(--navy);color:var(--cream);text-align:left;padding:.65rem .9rem;font-size:.75rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;white-space:nowrap}
+    td{padding:.65rem .9rem;border-bottom:1px solid var(--line);font-size:.85rem;vertical-align:middle}
     tr:last-child td{border-bottom:none}
     tr:hover td{background:#f9fafb}
-    .badge{display:inline-flex;padding:.25rem .6rem;border-radius:999px;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+    .badge{display:inline-flex;padding:.2rem .55rem;border-radius:999px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
     .badge-paid{background:#dcfce7;color:#16a34a}
     .badge-pending{background:#fef9c3;color:#854d0e}
     .badge-refunded{background:#fee2e2;color:#dc2626}
@@ -44,8 +48,24 @@
     .badge-email-sent{background:#dcfce7;color:#16a34a}
     .badge-email-pending{background:#fef9c3;color:#854d0e}
     .badge-email-failed{background:#fee2e2;color:#dc2626}
-    .action-link{color:var(--gold);font-weight:700;font-size:.82rem}
+    .tracking-link{color:var(--gold);font-weight:700;font-size:.8rem;text-decoration:none}
+    .tracking-link:hover{text-decoration:underline}
+    .action-link{color:var(--gold);font-weight:700;font-size:.8rem}
+    .actions-cell{display:flex;gap:.4rem;align-items:center;flex-wrap:nowrap}
+    .customer-cell .name{font-weight:600}
+    .customer-cell .email{color:var(--muted);font-size:.8rem;margin-top:.1rem}
     .empty{text-align:center;padding:3rem;color:var(--muted)}
+
+    /* ── Ship Modal ───────────────────────────────────────────────────────── */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;place-items:center}
+    .modal-overlay.open{display:grid}
+    .modal{background:#fff;border-radius:20px;padding:1.8rem;width:min(440px,calc(100vw - 2rem));box-shadow:0 24px 80px rgba(0,0,0,.25);max-height:90vh;overflow-y:auto}
+    .modal h2{margin:0 0 1.2rem;font-size:1.1rem;font-weight:800;color:var(--navy)}
+    .modal label{display:grid;gap:.3rem;font-size:.85rem;font-weight:700;color:var(--muted);margin-bottom:.75rem}
+    .modal input,.modal select{width:100%;border:1px solid var(--line);border-radius:10px;background:#f9fafb;color:var(--ink);padding:.6rem .8rem;font:inherit;outline:none}
+    .modal input:focus,.modal select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(214,162,58,.18)}
+    .modal-actions{display:flex;gap:.6rem;justify-content:flex-end;margin-top:1.2rem}
+    .modal-error{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:.55rem .8rem;font-size:.83rem;color:#dc2626;margin-bottom:.75rem;display:none}
   </style>
 </head>
 <body>
@@ -80,17 +100,74 @@
         <button class="filter-btn" data-filter="exported">Exported</button>
         <button class="filter-btn" data-filter="shipped">Shipped</button>
       </div>
-      <div id="table-wrap">
+      <div class="table-wrap" id="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Order #</th><th>Date</th><th>Customer</th><th>Pouches</th>
-              <th>Total</th><th>Payment</th><th>Fulfillment</th><th>Email</th><th>Tracking</th><th></th>
+              <th>Order #</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th style="text-align:center">Pouches</th>
+              <th>Total</th>
+              <th>Payment</th>
+              <th>Fulfillment</th>
+              <th>Email</th>
+              <th>Tracking</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="orders-body"><tr><td colspan="10" class="empty">Loading…</td></tr></tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <!-- Ship Modal -->
+  <div class="modal-overlay" id="ship-modal" onclick="if(event.target===this)closeShipModal()">
+    <div class="modal">
+      <h2 id="modal-title">Mark as Shipped</h2>
+      <div class="modal-error" id="modal-error"></div>
+      <form id="ship-form">
+        <input type="hidden" id="ship-order-id"/>
+        <label>Tracking Number *
+          <input id="ship-tracking" name="tracking_number" required placeholder="e.g. 9400111899223411963592"/>
+        </label>
+        <label>Carrier *
+          <select id="ship-carrier" name="tracking_carrier">
+            <option value="USPS" selected>USPS</option>
+            <option value="UPS">UPS</option>
+            <option value="FedEx">FedEx</option>
+            <option value="DHL">DHL</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+        <label>Shipping Service *
+          <select id="ship-service" name="shipping_service">
+            <option value="USPS Ground Advantage" selected>USPS Ground Advantage</option>
+            <option value="USPS Priority Mail">USPS Priority Mail</option>
+            <option value="USPS Priority Mail Express">USPS Priority Mail Express</option>
+            <option value="USPS First-Class Mail">USPS First-Class Mail</option>
+            <option value="UPS Ground">UPS Ground</option>
+            <option value="UPS 2-Day Air">UPS 2-Day Air</option>
+            <option value="UPS Next Day Air">UPS Next Day Air</option>
+            <option value="FedEx Ground">FedEx Ground</option>
+            <option value="FedEx 2Day">FedEx 2Day</option>
+            <option value="FedEx Priority Overnight">FedEx Priority Overnight</option>
+            <option value="DHL Express">DHL Express</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+        <label>Ship Date *
+          <input id="ship-date" name="shipped_at" type="date" required/>
+        </label>
+        <label>Admin Notes
+          <input id="ship-notes" name="admin_notes" placeholder="Optional internal notes"/>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeShipModal()">Cancel</button>
+          <button type="submit" class="btn btn-navy" id="ship-submit-btn">Mark as Shipped</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -105,25 +182,56 @@
     const fulMap={unfulfilled:'badge-unfulfilled',exported:'badge-exported',shipped:'badge-shipped',canceled:'badge-canceled'};
     const emailMap={sent:'badge-email-sent',pending:'badge-email-pending',failed:'badge-email-failed'};
 
-    function render(orders){
+    function trackingCell(o) {
+      if (!o.tracking_number) return '<span style="color:var(--muted)">—</span>';
+      const carrier = o.tracking_carrier || 'USPS';
+      let url = o.tracking_url;
+      if (!url && carrier === 'USPS') {
+        url = `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(o.tracking_number)}`;
+      }
+      if (url) {
+        return `<a class="tracking-link" href="${url}" target="_blank" rel="noopener">${o.tracking_number}</a>`;
+      }
+      return `<span style="font-size:.8rem">${o.tracking_number}</span>`;
+    }
+
+    function render(orders) {
       const tbody = document.getElementById('orders-body');
-      if(!orders.length){ tbody.innerHTML='<tr><td colspan="10" class="empty">No orders found.</td></tr>'; return; }
-      tbody.innerHTML = orders.map(o=>`
+      if (!orders.length) {
+        tbody.innerHTML='<tr><td colspan="10" class="empty">No orders found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = orders.map(o => {
+        const canShip = o.payment_status === 'paid' && o.fulfillment_status !== 'shipped' && o.fulfillment_status !== 'canceled';
+        return `
         <tr>
-          <td><strong>${o.order_number}</strong></td>
-          <td>${fmtDate(o.created_at)}</td>
-          <td>${o.customer_name||''}<br><small style="color:var(--muted)">${o.customer_email}</small></td>
-          <td>${o.total_pouches||1}</td>
-          <td>${fmt(o.total_cents)}</td>
+          <td><strong style="font-size:.85rem">${o.order_number}</strong></td>
+          <td style="white-space:nowrap">${fmtDate(o.created_at)}</td>
+          <td>
+            <div class="customer-cell">
+              <div class="name">${o.customer_name||''}</div>
+              <div class="email">${o.customer_email}</div>
+            </div>
+          </td>
+          <td style="text-align:center">${o.total_pouches||1}</td>
+          <td style="white-space:nowrap">${fmt(o.total_cents)}</td>
           <td>${badge(o.payment_status,payMap)}</td>
           <td>${badge(o.fulfillment_status,fulMap)}</td>
           <td>${badge(o.order_confirmation_email_status||'pending',emailMap)}</td>
-          <td style="font-size:.8rem;max-width:120px;word-break:break-all">${o.tracking_number||'—'}</td>
-          <td><a class="action-link" href="/admin/orders/${o.id}">View →</a></td>
-        </tr>`).join('');
+          <td style="max-width:140px">${trackingCell(o)}</td>
+          <td>
+            <div class="actions-cell">
+              <a class="btn btn-sm btn-ghost" href="/admin/orders/${o.id}">View</a>
+              ${canShip ? `<button class="btn btn-sm btn-navy" onclick="openShipModal(${o.id},'${escHtml(o.order_number)}')">Ship</button>` : ''}
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
     }
 
-    function applyFilter(f){
+    function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
+
+    function applyFilter(f) {
       activeFilter = f;
       document.querySelectorAll('.filter-btn').forEach(b=>b.classList.toggle('active', b.dataset.filter===f));
       render(f ? allOrders.filter(o=>o.fulfillment_status===f) : allOrders);
@@ -136,6 +244,76 @@
 
     document.getElementById('filters').addEventListener('click', e=>{
       if(e.target.matches('.filter-btn')) applyFilter(e.target.dataset.filter);
+    });
+
+    // ── Ship Modal ─────────────────────────────────────────────────────────────
+    function openShipModal(orderId, orderNumber) {
+      document.getElementById('ship-order-id').value = orderId;
+      document.getElementById('modal-title').textContent = `Mark as Shipped — ${orderNumber}`;
+      document.getElementById('ship-tracking').value = '';
+      document.getElementById('ship-carrier').value = 'USPS';
+      document.getElementById('ship-service').value = 'USPS Ground Advantage';
+      document.getElementById('ship-date').value = new Date().toISOString().slice(0,10);
+      document.getElementById('ship-notes').value = '';
+      document.getElementById('modal-error').style.display = 'none';
+      document.getElementById('ship-submit-btn').disabled = false;
+      document.getElementById('ship-submit-btn').textContent = 'Mark as Shipped';
+      document.getElementById('ship-modal').classList.add('open');
+      document.getElementById('ship-tracking').focus();
+    }
+
+    function closeShipModal() {
+      document.getElementById('ship-modal').classList.remove('open');
+    }
+
+    document.getElementById('ship-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const orderId = document.getElementById('ship-order-id').value;
+      const btn = document.getElementById('ship-submit-btn');
+      const errEl = document.getElementById('modal-error');
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+      errEl.style.display = 'none';
+
+      const body = new URLSearchParams({
+        tracking_number: document.getElementById('ship-tracking').value,
+        tracking_carrier: document.getElementById('ship-carrier').value,
+        shipping_service: document.getElementById('ship-service').value,
+        shipped_at: document.getElementById('ship-date').value,
+        admin_notes: document.getElementById('ship-notes').value,
+      });
+
+      try {
+        const r = await fetch(`/admin/orders/${orderId}/mark-shipped`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
+          body,
+        });
+        const data = await r.json();
+        if (r.ok) {
+          closeShipModal();
+          // Refresh order list
+          fetch('/admin/api/orders').then(r=>r.json()).then(orders=>{
+            allOrders = orders;
+            applyFilter(activeFilter);
+          });
+        } else {
+          errEl.textContent = data.error || 'Unknown error';
+          errEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Mark as Shipped';
+        }
+      } catch(err) {
+        errEl.textContent = 'Network error — please try again.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Mark as Shipped';
+      }
+    });
+
+    // Close modal on Escape
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeShipModal();
     });
   </script>
 </body>

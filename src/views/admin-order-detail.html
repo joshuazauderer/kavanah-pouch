@@ -133,7 +133,8 @@
             </form>
           </div>
           <div class="card" style="margin-bottom:1.2rem">
-            <h2>Tracking</h2>
+            <h2>Tracking &amp; Shipment</h2>
+            ${o.fulfillment_status==='shipped'?`<div class="field"><span class="k">Shipped At</span><span class="v">${fmtDate(o.shipped_at)}</span></div>`:''}
             <form method="POST" action="/admin/orders/${o.id}/tracking" style="display:grid;gap:.75rem">
               <label>Tracking Number <input name="tracking_number" value="${o.tracking_number||''}"/></label>
               <label>Carrier
@@ -141,8 +142,33 @@
                   ${['USPS','UPS','FedEx','DHL','Other'].map(c=>`<option ${(o.tracking_carrier||'USPS')===c?'selected':''}>${c}</option>`).join('')}
                 </select>
               </label>
+              <label>Shipping Service
+                <select name="shipping_service">
+                  ${[
+                    'USPS Ground Advantage',
+                    'USPS Priority Mail',
+                    'USPS Priority Mail Express',
+                    'USPS First-Class Mail',
+                    'UPS Ground',
+                    'UPS 2-Day Air',
+                    'UPS Next Day Air',
+                    'FedEx Ground',
+                    'FedEx 2Day',
+                    'FedEx Priority Overnight',
+                    'DHL Express',
+                    'Other',
+                  ].map(s=>`<option value="${s}" ${(o.shipping_service||'USPS Ground Advantage')===s?'selected':''}>${s}</option>`).join('')}
+                </select>
+              </label>
+              <label>Ship Date <input name="shipped_at" type="date" value="${o.shipped_at?o.shipped_at.slice(0,10):''}"/></label>
               <label>Tracking URL <input name="tracking_url" type="url" value="${o.tracking_url||''}"/></label>
-              <button class="btn btn-gold" type="submit">Save Tracking</button>
+              <label>Admin Notes <input name="admin_notes" value="${o.admin_notes||''}" placeholder="Internal notes (not shown to customer)"/></label>
+              <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+                <button class="btn btn-gold" type="submit">Save Tracking</button>
+                ${o.payment_status==='paid' && o.fulfillment_status!=='shipped'
+                  ? `<button class="btn btn-navy" type="submit" formaction="/admin/orders/${o.id}/mark-shipped">✓ Mark as Shipped</button>`
+                  : ''}
+              </div>
             </form>
           </div>
           <div class="card" style="margin-bottom:1.2rem">

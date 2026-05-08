@@ -101,8 +101,14 @@ async function createOrderFromStripe(session) {
       ]
     );
 
-    // Decrement inventory (inside transaction)
-    await decrementInventory(client, quantityPouches);
+    // Decrement inventory (inside transaction) — idempotent via transaction + unique session check above
+    await decrementInventory(client, quantityPouches, order.id);
+
+    // Record that inventory was decremented for this order (belt-and-suspenders guard)
+    await client.query(
+      `UPDATE orders SET inventory_decremented_at = NOW() WHERE id = $1`,
+      [order.id]
+    );
 
     await client.query('COMMIT');
     return order;
@@ -152,17 +158,84 @@ async function getOrderById(id) {
   return { ...order, items };
 }
 
-async function updateOrderTracking(id, { tracking_number, tracking_carrier, tracking_url, fulfillment_status }) {
+async function updateOrderTracking(id, {
+  tracking_number, tracking_carrier, tracking_url,
+  shipping_service, shipped_at, admin_notes, fulfillment_status,
+}) {
   const { rows: [order] } = await db.query(
     `UPDATE orders
-     SET tracking_number = COALESCE($1, tracking_number),
-         tracking_carrier = COALESCE($2, tracking_carrier),
-         tracking_url = COALESCE($3, tracking_url),
-         fulfillment_status = COALESCE($4, fulfillment_status),
-         updated_at = NOW()
-     WHERE id = $5
+     SET tracking_number   = COALESCE($1, tracking_number),
+         tracking_carrier  = COALESCE($2, tracking_carrier),
+         tracking_url      = COALESCE($3, tracking_url),
+         shipping_service  = COALESCE($4, shipping_service),
+         shipped_at        = COALESCE($5, shipped_at),
+         admin_notes       = COALESCE($6, admin_notes),
+         fulfillment_status = COALESCE($7, fulfillment_status),
+         updated_at        = NOW()
+     WHERE id = $8
      RETURNING *`,
-    [tracking_number, tracking_carrier, tracking_url, fulfillment_status, id]
+    [
+      tracking_number || null,
+      tracking_carrier || null,
+      tracking_url || null,
+      shipping_service || null,
+      shipped_at || null,
+      admin_notes || null,
+      fulfillment_status || null,
+      id,
+    ]
+  );
+  return order;
+}
+
+/**
+ * Mark an order as shipped.  Validates payment status and required fields.
+ * Does NOT send a shipping email — Pirate Ship handles that.
+ */
+async function markOrderShipped(id, {
+  tracking_number, tracking_carrier, shipping_service, shipped_at, admin_notes,
+}) {
+  if (!tracking_number) throw new Error('Tracking number is required');
+  if (!tracking_carrier) throw new Error('Carrier is required');
+  if (!shipping_service) throw new Error('Shipping service is required');
+  if (!shipped_at) throw new Error('Ship date is required');
+
+  // Check payment status
+  const { rows: [existing] } = await db.query(
+    'SELECT payment_status FROM orders WHERE id = $1',
+    [id]
+  );
+  if (!existing) throw new Error('Order not found');
+  if (existing.payment_status !== 'paid') {
+    throw new Error('Cannot mark unpaid order as shipped');
+  }
+
+  // Build USPS tracking URL if carrier is USPS and no URL provided
+  const trackingUrl = tracking_carrier === 'USPS'
+    ? `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(tracking_number)}`
+    : null;
+
+  const { rows: [order] } = await db.query(
+    `UPDATE orders
+     SET tracking_number   = $1,
+         tracking_carrier  = $2,
+         tracking_url      = COALESCE($3, tracking_url),
+         shipping_service  = $4,
+         shipped_at        = $5,
+         admin_notes       = COALESCE($6, admin_notes),
+         fulfillment_status = 'shipped',
+         updated_at        = NOW()
+     WHERE id = $7
+     RETURNING *`,
+    [
+      tracking_number,
+      tracking_carrier,
+      trackingUrl,
+      shipping_service,
+      new Date(shipped_at),
+      admin_notes || null,
+      id,
+    ]
   );
   return order;
 }
@@ -214,6 +287,7 @@ module.exports = {
   getOrders,
   getOrderById,
   updateOrderTracking,
+  markOrderShipped,
   updateOrderStatus,
   getDashboardStats,
 };
