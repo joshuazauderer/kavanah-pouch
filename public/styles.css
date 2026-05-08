@@ -258,6 +258,12 @@ h3 {
   margin: 0 auto;
   filter: drop-shadow(0 28px 44px rgba(0, 0, 0, 0.28));
 }
+.pouch-illustration img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 16px;
+}
 .hero-card-caption {
   display: flex;
   align-items: center;
@@ -424,6 +430,13 @@ h3 {
   transform: translateY(-12px);
 }
 .price-card form { margin-top: auto; padding-top: 1rem; }
+.price-shipping {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+}
+.price-shipping.free-shipping { color: #16a34a; }
 .badge {
   display: inline-flex;
   margin-bottom: 1rem;

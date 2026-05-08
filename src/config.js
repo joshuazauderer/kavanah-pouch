@@ -21,14 +21,29 @@ const config = {
     secretKey: process.env.STRIPE_SECRET_KEY,
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
     prices: {
-      single:    process.env.STRIPE_PRICE_SINGLE,
-      two_pack:  process.env.STRIPE_PRICE_TWO_PACK,
-      three_pack: process.env.STRIPE_PRICE_THREE_PACK,
+      one_pouch:  process.env.STRIPE_PRICE_1_POUCH,
+      two_pack:   process.env.STRIPE_PRICE_2_PACK,
+      three_pack: process.env.STRIPE_PRICE_3_PACK,
+    },
+    shippingRates: {
+      flatUs: process.env.STRIPE_SHIPPING_RATE_FLAT_US,
+      freeUs: process.env.STRIPE_SHIPPING_RATE_FREE_US,
     },
     pouchesPerPack: {
-      single: 1,
-      two_pack: 2,
+      one_pouch:  1,
+      two_pack:   2,
       three_pack: 3,
+    },
+    // Cents amounts — kept in sync with Stripe price objects and frontend display
+    subtotalCents: {
+      one_pouch:  1499,
+      two_pack:   2699,
+      three_pack: 3999,
+    },
+    shippingCents: {
+      one_pouch:  495,
+      two_pack:   495,
+      three_pack: 0,
     },
   },
 

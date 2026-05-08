@@ -83,25 +83,9 @@
           </ul>
         </div>
 
-        <div class="hero-card" aria-label="Kavanah Pouch product illustration">
+        <div class="hero-card" aria-label="Kavanah Pouch product photo">
           <div class="pouch-illustration">
-            <svg viewBox="0 0 300 430" role="img" aria-labelledby="pouch-title pouch-desc">
-              <title id="pouch-title">Kavanah Pouch illustration</title>
-              <desc id="pouch-desc">A navy signal-blocking phone pouch with gold and cream accents.</desc>
-              <defs>
-                <linearGradient id="pouchGradient" x1="0" x2="1" y1="0" y2="1">
-                  <stop offset="0" stop-color="#062a50"/>
-                  <stop offset="1" stop-color="#001b38"/>
-                </linearGradient>
-              </defs>
-              <path d="M150 18c62 0 112 50 112 112v18c10 8 10 24 0 32v155c0 41-33 74-74 74H112c-41 0-74-33-74-74V180c-10-8-10-24 0-32v-18C38 68 88 18 150 18Z" fill="url(#pouchGradient)" stroke="#f8f1df" stroke-width="12" stroke-linejoin="round"/>
-              <circle cx="150" cy="78" r="22" fill="none" stroke="#d6a23a" stroke-width="12"/>
-              <rect x="104" y="156" width="84" height="124" rx="13" fill="none" stroke="#d6a23a" stroke-width="12"/>
-              <rect x="123" y="180" width="48" height="70" rx="5" fill="#f8f1df"/>
-              <circle cx="146" cy="262" r="7" fill="#d6a23a"/>
-              <path d="M79 161c-26 40-26 83 0 123M221 161c26 40 26 83 0 123M94 181c-15 26-15 57 0 83M206 181c15 26 15 57 0 83" fill="none" stroke="#d6a23a" stroke-width="10" stroke-linecap="round"/>
-              <path d="M84 142l143 154" stroke="#d6a23a" stroke-width="14" stroke-linecap="round"/>
-            </svg>
+            <img src="/assets/hero-product.png" alt="Kavanah Pouch — navy signal-blocking phone pouch with gold and cream accents" />
           </div>
           <div class="hero-card-caption">
             <span class="caption-line"></span>
@@ -236,32 +220,35 @@
             <h3>1 Pouch</h3>
             <p class="price">$14.99</p>
             <p>Best for personal use and building a better davening routine.</p>
+            <p class="price-shipping">+ $4.95 shipping</p>
             <form action="/api/checkout" method="POST">
-              <input type="hidden" name="priceKey" value="single" />
+              <input type="hidden" name="priceKey" value="one_pouch" />
               <button class="button button-dark full" type="submit">Buy 1 Pouch</button>
             </form>
           </article>
-          <article class="price-card featured">
-            <div class="badge">Recommended</div>
+          <article class="price-card">
             <h3>2-Pack</h3>
-            <p class="price">$24.99</p>
+            <p class="price">$26.99</p>
             <p>A meaningful gift for a spouse, parent, child, chavrusa, or friend.</p>
+            <p class="price-shipping">+ $4.95 shipping</p>
             <form action="/api/checkout" method="POST">
               <input type="hidden" name="priceKey" value="two_pack" />
-              <button class="button button-gold full" type="submit">Buy 2-Pack</button>
+              <button class="button button-dark full" type="submit">Buy 2-Pack</button>
             </form>
           </article>
-          <article class="price-card">
+          <article class="price-card featured">
+            <div class="badge">Best Value</div>
             <h3>3-Pack</h3>
-            <p class="price">$34.99</p>
+            <p class="price">$39.99</p>
             <p>Best value for family, gifts, and keeping one in more than one place.</p>
+            <p class="price-shipping free-shipping">Free shipping</p>
             <form action="/api/checkout" method="POST">
               <input type="hidden" name="priceKey" value="three_pack" />
-              <button class="button button-dark full" type="submit">Buy 3-Pack</button>
+              <button class="button button-gold full" type="submit">Buy 3-Pack</button>
             </form>
           </article>
         </div>
-        <p class="purchase-note">Free shipping on all US orders. Payment processed securely by Stripe. No account required.</p>
+        <p class="purchase-note">Free shipping on 3-packs. Flat-rate US shipping on smaller orders. Payment processed securely by Stripe. No account required.</p>
       </div>
     </section>
 

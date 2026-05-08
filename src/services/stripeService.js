@@ -7,12 +7,19 @@ async function createCheckoutSession(priceKey) {
   const priceId = config.stripe.prices[priceKey];
   if (!priceId) throw new Error(`Unknown priceKey: ${priceKey}`);
 
+  const shippingRateId = priceKey === 'three_pack'
+    ? config.stripe.shippingRates.freeUs
+    : config.stripe.shippingRates.flatUs;
+
+  if (!shippingRateId) throw new Error(`Shipping rate not configured for: ${priceKey}`);
+
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
     line_items: [{ price: priceId, quantity: 1 }],
     shipping_address_collection: {
-      allowed_countries: ['US', 'CA'],
+      allowed_countries: ['US'],
     },
+    shipping_options: [{ shipping_rate: shippingRateId }],
     payment_intent_data: {
       statement_descriptor: 'KAVANAHPOUCH.COM',
     },

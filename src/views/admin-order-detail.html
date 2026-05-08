@@ -105,8 +105,11 @@
               <thead><tr><th>Item</th><th>Pouches</th><th>Amount</th></tr></thead>
               <tbody>${(o.items||[]).map(i=>`<tr><td>${i.name}</td><td>${i.quantity_pouches}</td><td>${fmt(i.total_amount_cents)}</td></tr>`).join('')||'<tr><td colspan="3" style="color:var(--muted)">No items</td></tr>'}</tbody>
             </table>
-            <div style="margin-top:.8rem;font-size:.88rem;text-align:right">
-              <strong>Total: ${fmt(o.total_cents)}</strong>
+            <div style="margin-top:.8rem;font-size:.85rem;color:var(--muted);text-align:right;display:grid;gap:.2rem">
+              <span>Subtotal: ${fmt(o.subtotal_cents)}</span>
+              <span>Shipping: ${o.shipping_cents!=null?(o.shipping_cents===0?'Free':fmt(o.shipping_cents)):'—'}</span>
+              ${o.tax_cents?`<span>Tax: ${fmt(o.tax_cents)}</span>`:''}
+              <strong style="color:var(--ink);font-size:.9rem">Total: ${fmt(o.total_cents)}</strong>
             </div>
           </div>
         </div>

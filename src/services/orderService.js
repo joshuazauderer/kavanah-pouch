@@ -23,7 +23,7 @@ async function createOrderFromStripe(session) {
       return null;
     }
 
-    const priceKey = session.metadata?.priceKey || 'single';
+    const priceKey = session.metadata?.priceKey || 'one_pouch';
     const pouchesPerPack = config.stripe.pouchesPerPack;
     const quantityPouches = pouchesPerPack[priceKey] || 1;
 
@@ -33,14 +33,20 @@ async function createOrderFromStripe(session) {
 
     const orderNumber = generateOrderNumber();
 
+    const subtotalCents  = session.amount_subtotal ?? (session.amount_total || 0);
+    const shippingCents  = session.total_details?.amount_shipping ?? 0;
+    const taxCents       = session.total_details?.amount_tax ?? 0;
+    const totalCents     = session.amount_total || 0;
+
     const { rows: [order] } = await client.query(
       `INSERT INTO orders (
         order_number, stripe_checkout_session_id, stripe_payment_intent_id,
         customer_email, customer_name,
         shipping_name, shipping_address_line1, shipping_address_line2,
         shipping_city, shipping_state, shipping_postal_code, shipping_country,
-        total_cents, currency, payment_status, fulfillment_status
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'paid','unfulfilled')
+        subtotal_cents, shipping_cents, tax_cents, total_cents,
+        currency, payment_status, fulfillment_status
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'paid','unfulfilled')
       RETURNING *`,
       [
         orderNumber,
@@ -55,15 +61,18 @@ async function createOrderFromStripe(session) {
         addr.state || null,
         addr.postal_code || null,
         addr.country || null,
-        session.amount_total || 0,
+        subtotalCents,
+        shippingCents,
+        taxCents,
+        totalCents,
         session.currency || 'usd',
       ]
     );
 
     // Insert order item
     const priceNames = {
-      single: '1 Kavanah Pouch',
-      two_pack: '2-Pack Kavanah Pouch',
+      one_pouch:  '1 Kavanah Pouch',
+      two_pack:   '2-Pack Kavanah Pouch',
       three_pack: '3-Pack Kavanah Pouch',
     };
 
@@ -83,8 +92,8 @@ async function createOrderFromStripe(session) {
         priceNames[priceKey] || 'Kavanah Pouch',
         priceKey,
         quantityPouches,
-        session.amount_total || 0,
-        session.amount_total || 0,
+        subtotalCents,
+        subtotalCents,
       ]
     );
 

@@ -6,7 +6,7 @@ const config = require('../config');
 
 const router = express.Router();
 
-const VALID_PRICE_KEYS = ['single', 'two_pack', 'three_pack'];
+const VALID_PRICE_KEYS = ['one_pouch', 'two_pack', 'three_pack'];
 
 router.post(
   '/api/checkout',
