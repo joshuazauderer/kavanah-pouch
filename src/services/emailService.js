@@ -13,12 +13,14 @@ function getResend() {
 // ── Sender addresses ────────────────────────────────────────────────────────
 // artcertify.store is the verified Resend domain on this account.
 // Set FROM_EMAIL to override once kavanahpouch.com is verified in Resend.
-const OWNER_FROM    = 'Kavanah Pouch <noreply@artcertify.store>';
-const CUSTOMER_FROM = () => {
+// Both owner alerts and customer emails use the same FROM_EMAIL setting.
+const FROM = () => {
   const email = process.env.FROM_EMAIL || 'noreply@artcertify.store';
   const name  = process.env.FROM_NAME  || 'Kavanah Pouch';
   return `${name} <${email}>`;
 };
+const OWNER_FROM    = FROM;
+const CUSTOMER_FROM = FROM;
 const SUPPORT_EMAIL = () => process.env.SUPPORT_EMAIL || 'support@kavanahpouch.com';
 const OWNER_EMAIL   = () => process.env.OWNER_NOTIFICATION_EMAIL;
 
@@ -274,7 +276,7 @@ async function sendOwnerNotification(subject, html) {
   if (!to || !process.env.RESEND_API_KEY) return;
   try {
     const { error } = await getResend().emails.send({
-      from: OWNER_FROM,
+      from: OWNER_FROM(),
       to: [to],
       replyTo: SUPPORT_EMAIL(),
       subject,
