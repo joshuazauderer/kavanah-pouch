@@ -11,6 +11,7 @@ const {
 } = require('../services/orderService');
 const { getInventory, setInventory } = require('../services/inventoryService');
 const { exportPirateShipCsv } = require('../services/csvService');
+const { sendOrderConfirmationEmail } = require('../services/emailService');
 
 const router = express.Router();
 
@@ -259,6 +260,21 @@ router.get('/admin/api/feedback', requireAdmin, async (req, res) => {
       'SELECT * FROM feedback_messages ORDER BY created_at DESC'
     );
     res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Resend order confirmation email
+router.post('/admin/orders/:id/resend-confirmation', requireAdmin, async (req, res) => {
+  try {
+    const order = await getOrderById(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (order.payment_status !== 'paid') {
+      return res.status(400).json({ error: 'Cannot send confirmation for unpaid order' });
+    }
+    await sendOrderConfirmationEmail(order);
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

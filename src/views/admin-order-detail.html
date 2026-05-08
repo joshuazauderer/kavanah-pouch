@@ -75,6 +75,7 @@
     const p = new URLSearchParams(location.search);
     const payMap={paid:'badge-paid',pending:'badge-pending',refunded:'badge-refunded',failed:'badge-refunded',canceled:'badge-canceled'};
     const fulMap={unfulfilled:'badge-unfulfilled',exported:'badge-exported',shipped:'badge-shipped',canceled:'badge-canceled'};
+    const emailMap={sent:'badge-shipped',pending:'badge-pending',failed:'badge-refunded'};
     function badge(val,map){ return `<span class="badge ${map[val]||''}">${val}</span>`; }
     function fmt(c){ return c!=null?'$'+(c/100).toFixed(2):'—'; }
     function fmtDate(d){ return d?new Date(d).toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'}):'—'; }
@@ -143,12 +144,58 @@
               <button class="btn btn-gold" type="submit">Save Tracking</button>
             </form>
           </div>
+          <div class="card" style="margin-bottom:1.2rem">
+            <h2>Order Email</h2>
+            <div class="field"><span class="k">Status</span><span class="v" id="email-status-badge">${badge(o.order_confirmation_email_status||'pending',emailMap)}</span></div>
+            <div class="field"><span class="k">Sent At</span><span class="v" id="email-sent-at">${o.order_confirmation_email_sent_at?fmtDate(o.order_confirmation_email_sent_at):'—'}</span></div>
+            ${o.order_confirmation_email_error?`<div class="field"><span class="k">Error</span><span class="v" style="color:#dc2626;font-size:.8rem;word-break:break-word">${f(o.order_confirmation_email_error)}</span></div>`:''}
+            ${o.payment_status==='paid'?`
+            <hr style="border:none;border-top:1px solid var(--line);margin:1rem 0">
+            <div id="resend-result" style="display:none;margin-bottom:.75rem;padding:.5rem .8rem;border-radius:8px;font-size:.83rem;font-weight:600"></div>
+            <button class="btn btn-navy" id="resend-btn" type="button" onclick="resendEmail()">Resend Confirmation Email</button>`:''}
+          </div>
           <div class="card">
             <h2>Stripe IDs</h2>
             <div class="field"><span class="k">Session</span><span class="v" style="font-size:.78rem">${f(o.stripe_checkout_session_id)}</span></div>
             <div class="field"><span class="k">Payment Intent</span><span class="v" style="font-size:.78rem">${f(o.stripe_payment_intent_id)}</span></div>
           </div>
         </div>`;
+      // Resend confirmation email
+      window.resendEmail = async function() {
+        const btn = document.getElementById('resend-btn');
+        const result = document.getElementById('resend-result');
+        btn.disabled = true;
+        btn.textContent = 'Sending…';
+        result.style.display = 'none';
+        try {
+          const r = await fetch(`/admin/orders/${o.id}/resend-confirmation`, {method:'POST'});
+          const data = await r.json();
+          if (r.ok) {
+            btn.textContent = '✓ Sent';
+            btn.style.background = '#16a34a';
+            document.getElementById('email-status-badge').innerHTML = '<span class="badge badge-shipped">sent</span>';
+            document.getElementById('email-sent-at').textContent = new Date().toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'});
+            result.style.display = 'block';
+            result.style.background = '#dcfce7';
+            result.style.color = '#16a34a';
+            result.textContent = '✓ Confirmation email sent successfully.';
+          } else {
+            btn.disabled = false;
+            btn.textContent = 'Resend Confirmation Email';
+            result.style.display = 'block';
+            result.style.background = '#fee2e2';
+            result.style.color = '#dc2626';
+            result.textContent = 'Error: ' + (data.error || 'Unknown error');
+          }
+        } catch(e) {
+          btn.disabled = false;
+          btn.textContent = 'Resend Confirmation Email';
+          result.style.display = 'block';
+          result.style.background = '#fee2e2';
+          result.style.color = '#dc2626';
+          result.textContent = 'Network error — please try again.';
+        }
+      };
     }).catch(()=>{
       document.getElementById('content').innerHTML='<div class="card"><p style="color:red">Error loading order.</p></div>';
     });

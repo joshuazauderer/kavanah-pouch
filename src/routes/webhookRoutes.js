@@ -1,7 +1,7 @@
 const express = require('express');
 const { constructWebhookEvent } = require('../services/stripeService');
 const { createOrderFromStripe } = require('../services/orderService');
-const { notifyNewOrder } = require('../services/emailService');
+const { notifyNewOrder, sendOrderConfirmationEmail } = require('../services/emailService');
 
 const router = express.Router();
 
@@ -26,6 +26,10 @@ router.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), as
           if (order) {
             console.log(`Order created: ${order.order_number}`);
             notifyNewOrder(order).catch(() => {});
+            // Send branded customer confirmation (errors logged + saved to DB, never crash webhook)
+            sendOrderConfirmationEmail(order).catch(err =>
+              console.error('Customer confirmation email error:', err.message)
+            );
           }
         }
         break;

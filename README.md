@@ -181,15 +181,122 @@ DEFAULT_PACKAGE_HEIGHT_IN=1
 
 ---
 
+## Customer Email Flow
+
+Three separate systems send email. Each handles a distinct role:
+
+| Email | Sender | Trigger |
+|---|---|---|
+| Payment receipt | **Stripe** | Immediately after successful payment |
+| Order confirmation | **Kavanah Pouch app** | After webhook verifies payment and saves order to DB |
+| Shipping / tracking | **Pirate Ship** | After you purchase the postage label in Pirate Ship |
+
+The app only sends the **order confirmation**. It does not duplicate the Stripe receipt or the Pirate Ship tracking email.
+
+### Order Confirmation Email
+
+Triggered in `webhookRoutes.js` after `createOrderFromStripe` succeeds. Idempotency is guaranteed because `createOrderFromStripe` returns `null` for duplicate webhook events — if the order already exists, no email is sent again.
+
+Email status is tracked in the `orders` table:
+
+| Column | Values |
+|---|---|
+| `order_confirmation_email_status` | `pending` · `sent` · `failed` |
+| `order_confirmation_email_sent_at` | Timestamp of successful send |
+| `order_confirmation_email_error` | Error message if send failed |
+
+Email failures are logged and visible in the admin dashboard. They do not affect payment or fulfillment status.
+
+The **Order Email** card in each admin order detail page shows current email status and a **Resend Confirmation Email** button (paid orders only).
+
+### Email Provider Setup (Resend)
+
+The app uses [Resend](https://resend.com) for transactional email.
+
+1. Log into [resend.com](https://resend.com).
+2. Generate an API key and set `RESEND_API_KEY` in your environment.
+3. The default sending domain is `artcertify.store` (already verified on this account).
+4. To send from `orders@kavanahpouch.com`:
+   - Go to **Domains** in Resend → Add `kavanahpouch.com`.
+   - Add the required DNS records (MX, SPF, DKIM) to your Porkbun DNS panel.
+   - Once verified, set `FROM_EMAIL=orders@kavanahpouch.com` in Coolify.
+5. Set `SUPPORT_EMAIL=support@kavanahpouch.com` so reply-to and footer links are correct.
+
+---
+
+## Stripe Email Setup
+
+> Stripe sends the payment receipt. The Kavanah Pouch app sends the branded order confirmation. Pirate Ship sends the tracking email.
+
+Manual steps in the Stripe Dashboard:
+
+1. Log into the [Stripe Dashboard](https://dashboard.stripe.com).
+2. Go to **Settings → Customer emails**.
+3. Enable **Receipts** for successful payments.
+4. Confirm the public business name is set to **Kavanah Pouch**.
+5. Confirm the customer support email is correct.
+6. Confirm the statement descriptor is set appropriately (e.g., `KAVANAH POUCH`).
+7. Confirm Stripe Checkout is collecting customer email and shipping address.
+8. Confirm the webhook endpoint is configured and points to:
+   ```
+   https://kavanahpouch.com/api/stripe/webhook
+   ```
+9. Confirm the webhook listens for `checkout.session.completed` (plus optionally `charge.refunded` and `checkout.session.expired`).
+10. Test in Stripe test mode and confirm:
+    - The Stripe payment receipt is sent automatically.
+    - The Kavanah Pouch order confirmation is sent separately (check admin dashboard email status).
+    - No duplicate emails.
+
+---
+
+## Pirate Ship Tracking Email Setup
+
+> Pirate Ship sends the tracking email after you purchase a label. The Kavanah Pouch app does not send a separate shipping notification at launch.
+
+Manual steps in Pirate Ship:
+
+1. Log into [Pirate Ship](https://www.pirateship.com).
+2. Confirm that customer email addresses are included in the CSV export from the Kavanah Pouch admin dashboard (the **Email** column is always exported).
+3. When uploading a CSV batch to Pirate Ship, map the **Email** field to the customer email column.
+4. In Pirate Ship account settings, confirm that **tracking notification emails to customers** are enabled.
+5. If Pirate Ship allows a custom sender name, set it to **Kavanah Pouch**.
+6. If custom tracking email wording is available, use:
+   - **Subject:** `Your Kavanah Pouch order is on the way`
+   - **Body:**
+     ```
+     Your Kavanah Pouch order is on the way.
+
+     Tracking Number: [Tracking Number]
+     Track your package: [Tracking Link]
+
+     Thank you for your order.
+
+     Kavanah Pouch
+     Daven without distractions.
+     KavanahPouch.com
+     ```
+7. Confirm the tracking email delay setting. Default may send immediately after label purchase.
+8. Purchase a test label and confirm the customer receives the tracking email.
+9. If using a custom sending domain in Pirate Ship, add any required DNS records (DKIM, SPF) in Porkbun.
+
+---
+
 ## Go-Live Checklist
 
-- [ ] Migrate DB on production
+- [ ] Migrate DB on production (`npm run migrate` — includes migration 003 for email tracking)
 - [ ] Seed admin user
 - [ ] Set live Stripe keys (`sk_live_…`)
 - [ ] Set live Stripe webhook secret
 - [ ] Confirm `kavanahpouch.com` resolves and HTTPS works
-- [ ] Place one real test order end-to-end
-- [ ] Export CSV and verify Pirate Ship import
+- [ ] Set `RESEND_API_KEY` in Coolify env vars
+- [ ] Verify sending domain in Resend and set `FROM_EMAIL` / `FROM_NAME` / `SUPPORT_EMAIL`
+- [ ] Enable Stripe payment receipts in Stripe Dashboard (Settings → Customer emails)
+- [ ] Confirm Stripe webhook points to `https://kavanahpouch.com/api/stripe/webhook`
+- [ ] Place one test order end-to-end — verify Stripe receipt + Kavanah Pouch confirmation both arrive
+- [ ] Confirm admin dashboard shows email status (`sent`) on the test order
+- [ ] Test "Resend Confirmation Email" button in admin order detail
+- [ ] Export CSV and verify Pirate Ship import (confirm Email column is present)
+- [ ] Configure Pirate Ship tracking email sender name and wording
 - [ ] Set actual inventory quantity in admin
 - [ ] Add real product photos to `public/assets/`
 - [ ] Update package weight/dimensions after measuring sample

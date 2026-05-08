@@ -1,4 +1,5 @@
 const { Resend } = require('resend');
+const db = require('../db');
 
 let _resend = null;
 
@@ -9,28 +10,283 @@ function getResend() {
   return _resend;
 }
 
-const OWNER_EMAIL = () => process.env.OWNER_NOTIFICATION_EMAIL;
-// artcertify.store is the verified Resend domain on this account
-const FROM = 'Kavanah Pouch <noreply@artcertify.store>';
+// ── Sender addresses ────────────────────────────────────────────────────────
+// artcertify.store is the verified Resend domain on this account.
+// Set FROM_EMAIL to override once kavanahpouch.com is verified in Resend.
+const OWNER_FROM    = 'Kavanah Pouch <noreply@artcertify.store>';
+const CUSTOMER_FROM = () => {
+  const email = process.env.FROM_EMAIL || 'noreply@artcertify.store';
+  const name  = process.env.FROM_NAME  || 'Kavanah Pouch';
+  return `${name} <${email}>`;
+};
+const SUPPORT_EMAIL = () => process.env.SUPPORT_EMAIL || 'support@kavanahpouch.com';
+const OWNER_EMAIL   = () => process.env.OWNER_NOTIFICATION_EMAIL;
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function fmtMoney(cents) {
+  if (cents == null) return '—';
+  return '$' + (Number(cents) / 100).toFixed(2);
+}
+
+function fmtShipping(cents) {
+  if (Number(cents) === 0) return 'Free';
+  return fmtMoney(cents);
+}
+
+// ── Order confirmation content builder ──────────────────────────────────────
+function buildOrderConfirmationContent(order, items) {
+  const firstName    = (order.customer_name || '').split(' ')[0] || 'there';
+  const item         = (items && items[0]) || {};
+  const itemName     = item.name || 'Kavanah Pouch';
+  const qty          = item.quantity_pouches || 1;
+  const supportEmail = SUPPORT_EMAIL();
+
+  const addrLines = [
+    order.shipping_name || order.customer_name || '',
+    order.shipping_address_line1 || '',
+    order.shipping_address_line2 || null,
+    [order.shipping_city, order.shipping_state, order.shipping_postal_code]
+      .filter(Boolean).join(', '),
+    order.shipping_country && order.shipping_country !== 'US'
+      ? order.shipping_country : null,
+  ].filter(Boolean);
+
+  // ── Plain text ─────────────────────────────────────────────────────────
+  const text = [
+    `Hi ${firstName},`,
+    '',
+    'Thank you for your order from Kavanah Pouch.',
+    '',
+    `Order Number: ${order.order_number}`,
+    `Item: ${itemName}`,
+    `Quantity of Pouches: ${qty}`,
+    `Product Subtotal: ${fmtMoney(order.subtotal_cents)}`,
+    `Shipping: ${fmtShipping(order.shipping_cents)}`,
+    `Total Paid: ${fmtMoney(order.total_cents)}`,
+    '',
+    'Shipping Address:',
+    ...addrLines,
+    '',
+    'We are preparing your order for shipment. Once your package ships, you will receive a tracking email.',
+    '',
+    'Most orders ship within 1–2 business days. USPS Ground Advantage delivery is typically 2–5 days after USPS receives the package, though delivery times are not guaranteed.',
+    '',
+    'Thank you for supporting Kavanah Pouch.',
+    '',
+    'Daven without distractions,',
+    'Kavanah Pouch',
+    'KavanahPouch.com',
+    '',
+    `Questions? Contact us at ${supportEmail}`,
+  ].join('\n');
+
+  // ── HTML ───────────────────────────────────────────────────────────────
+  const addrHtml = addrLines.map(escHtml).join('<br>');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Your Kavanah Pouch Order</title>
+</head>
+<body style="margin:0;padding:0;background:#e5dfd3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#e5dfd3;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%;max-width:580px;">
+
+          <!-- HEADER -->
+          <tr>
+            <td style="background:#001f42;border-radius:14px 14px 0 0;padding:30px 40px;text-align:center;">
+              <div style="font-size:20px;font-weight:800;color:#d6a23a;letter-spacing:.08em;text-transform:uppercase;">Kavanah Pouch</div>
+              <div style="font-size:11px;color:rgba(248,241,223,.6);margin-top:6px;letter-spacing:.1em;text-transform:uppercase;">Daven without distractions</div>
+            </td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="background:#f8f1df;padding:36px 40px;">
+
+              <p style="margin:0 0 6px;font-size:17px;font-weight:700;color:#132133;">Hi ${escHtml(firstName)},</p>
+              <p style="margin:0 0 28px;font-size:14px;color:#132133;line-height:1.7;">Thank you for your order. We&#8217;ve received it and are preparing it for shipment.</p>
+
+              <!-- ORDER SUMMARY -->
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#fff;border-radius:10px;border:1px solid rgba(19,33,51,.12);margin-bottom:20px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#667085;margin-bottom:14px;">Order Summary</div>
+                    <table width="100%" cellpadding="0" cellspacing="4" role="presentation">
+                      <tr>
+                        <td style="font-size:13px;color:#667085;font-weight:600;padding:3px 0;">Order Number</td>
+                        <td align="right" style="font-size:13px;color:#132133;font-weight:700;padding:3px 0;">${escHtml(order.order_number)}</td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:13px;color:#667085;font-weight:600;padding:3px 0;">Item</td>
+                        <td align="right" style="font-size:13px;color:#132133;font-weight:600;padding:3px 0;">${escHtml(itemName)}</td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:13px;color:#667085;font-weight:600;padding:3px 0;">Quantity</td>
+                        <td align="right" style="font-size:13px;color:#132133;font-weight:600;padding:3px 0;">${qty} pouch${qty > 1 ? 'es' : ''}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="padding:8px 0 0;">
+                          <hr style="border:none;border-top:1px solid rgba(19,33,51,.1);margin:0;">
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:13px;color:#667085;padding:6px 0 3px;">Subtotal</td>
+                        <td align="right" style="font-size:13px;color:#132133;padding:6px 0 3px;">${escHtml(fmtMoney(order.subtotal_cents))}</td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:13px;color:#667085;padding:3px 0;">Shipping</td>
+                        <td align="right" style="font-size:13px;color:${Number(order.shipping_cents) === 0 ? '#16a34a' : '#132133'};padding:3px 0;">${escHtml(fmtShipping(order.shipping_cents))}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="padding:6px 0 0;">
+                          <hr style="border:none;border-top:1px solid rgba(19,33,51,.1);margin:0;">
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:14px;font-weight:700;color:#132133;padding:8px 0 0;">Total Paid</td>
+                        <td align="right" style="font-size:14px;font-weight:800;color:#001f42;padding:8px 0 0;">${escHtml(fmtMoney(order.total_cents))}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- SHIPPING ADDRESS -->
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#fff;border-radius:10px;border:1px solid rgba(19,33,51,.12);margin-bottom:28px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#667085;margin-bottom:10px;">Shipping Address</div>
+                    <div style="font-size:13px;color:#132133;line-height:1.8;">${addrHtml}</div>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 10px;font-size:13px;color:#132133;line-height:1.7;">We are preparing your order for shipment. Once your package ships, you will receive a tracking email from Pirate Ship with your tracking number.</p>
+              <p style="margin:0 0 28px;font-size:13px;color:#667085;line-height:1.7;">Most orders ship within 1&#8211;2 business days. USPS Ground Advantage delivery is typically 2&#8211;5 days after USPS receives the package, though delivery times are not guaranteed.</p>
+
+              <p style="margin:0 0 2px;font-size:14px;color:#132133;font-weight:600;">Thank you for supporting Kavanah Pouch.</p>
+              <p style="margin:0;font-size:13px;color:#667085;font-style:italic;">Daven without distractions,<br>Kavanah Pouch</p>
+
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background:#001f42;border-radius:0 0 14px 14px;padding:22px 40px;text-align:center;">
+              <p style="margin:0 0 6px;font-size:12px;color:rgba(248,241,223,.7);">
+                Questions? <a href="mailto:${escHtml(supportEmail)}" style="color:#d6a23a;text-decoration:none;">${escHtml(supportEmail)}</a>
+              </p>
+              <p style="margin:0;font-size:11px;color:rgba(248,241,223,.4);">
+                Kavanah Pouch &nbsp;&middot;&nbsp;
+                <a href="https://kavanahpouch.com" style="color:rgba(248,241,223,.4);text-decoration:none;">KavanahPouch.com</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return {
+    subject: 'Your Kavanah Pouch order has been received',
+    html,
+    text,
+  };
+}
+
+// ── Send customer order confirmation ─────────────────────────────────────────
+async function sendOrderConfirmationEmail(order) {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY not set — skipping customer confirmation email');
+    return;
+  }
+  if (!order.customer_email) {
+    console.warn(`Order ${order.order_number} has no customer email — skipping confirmation`);
+    return;
+  }
+
+  const { rows: items } = await db.query(
+    'SELECT * FROM order_items WHERE order_id = $1',
+    [order.id]
+  );
+
+  const { subject, html, text } = buildOrderConfirmationContent(order, items);
+
+  try {
+    const { error } = await getResend().emails.send({
+      from:    CUSTOMER_FROM(),
+      to:      [order.customer_email],
+      replyTo: SUPPORT_EMAIL(),
+      subject,
+      html,
+      text,
+    });
+
+    if (error) throw new Error(error.message || JSON.stringify(error));
+
+    await db.query(
+      `UPDATE orders
+       SET order_confirmation_email_status  = 'sent',
+           order_confirmation_email_sent_at = NOW(),
+           order_confirmation_email_error   = NULL,
+           updated_at = NOW()
+       WHERE id = $1`,
+      [order.id]
+    );
+
+    console.log(`Confirmation email sent: ${order.order_number} → ${order.customer_email}`);
+  } catch (err) {
+    const msg = (err.message || String(err)).slice(0, 1000);
+    console.error(`Confirmation email FAILED for ${order.order_number}:`, msg);
+
+    await db.query(
+      `UPDATE orders
+       SET order_confirmation_email_status = 'failed',
+           order_confirmation_email_error  = $2,
+           updated_at = NOW()
+       WHERE id = $1`,
+      [order.id, msg]
+    ).catch(() => {});
+
+    throw err;
+  }
+}
+
+// ── Owner notifications ───────────────────────────────────────────────────────
 async function sendOwnerNotification(subject, html) {
   const to = OWNER_EMAIL();
   if (!to || !process.env.RESEND_API_KEY) return;
   try {
     const { error } = await getResend().emails.send({
-      from: FROM,
+      from: OWNER_FROM,
       to: [to],
-      replyTo: 'support@kavanahpouch.com',
+      replyTo: SUPPORT_EMAIL(),
       subject,
       html,
     });
-    if (error) console.error('Email send error:', error.message);
+    if (error) console.error('Owner email send error:', error.message);
   } catch (err) {
-    console.error('Email send error:', err.message);
+    console.error('Owner email send error:', err.message);
   }
 }
 
-function text(str) {
+function textToHtml(str) {
   return str.replace(/\n/g, '<br>');
 }
 
@@ -54,7 +310,7 @@ async function notifyNewBulkInquiry(inquiry) {
      Email: ${inquiry.email}<br>
      Organization: ${inquiry.organization_name || 'N/A'}<br>
      Quantity: ${inquiry.quantity_requested || 'Not specified'}</p>
-     <p>Message:<br>${text(inquiry.message || '—')}</p>
+     <p>Message:<br>${textToHtml(inquiry.message || '—')}</p>
      <p><a href="https://kavanahpouch.com/admin/bulk-inquiries">View in dashboard</a></p>`
   );
 }
@@ -67,7 +323,7 @@ async function notifyNewSupportMessage(msg) {
      Email: ${msg.email}<br>
      Topic: ${msg.category || 'N/A'}<br>
      Order #: ${msg.order_number || 'N/A'}</p>
-     <p>Message:<br>${text(msg.message)}</p>
+     <p>Message:<br>${textToHtml(msg.message)}</p>
      <p><a href="https://kavanahpouch.com/admin/support">View in dashboard</a></p>`
   );
 }
@@ -80,7 +336,7 @@ async function notifyNewFeedback(feedback) {
      Email: ${feedback.email || 'N/A'}<br>
      Use case: ${feedback.usage_context || 'N/A'}<br>
      May use as testimonial: ${feedback.may_use_as_testimonial ? 'Yes' : 'No'}</p>
-     <p>Feedback:<br>${text(feedback.message)}</p>
+     <p>Feedback:<br>${textToHtml(feedback.message)}</p>
      <p><a href="https://kavanahpouch.com/admin/feedback">View in dashboard</a></p>`
   );
 }
@@ -96,6 +352,7 @@ async function notifyNewWaitlistSignup(signup) {
 }
 
 module.exports = {
+  sendOrderConfirmationEmail,
   notifyNewOrder,
   notifyNewBulkInquiry,
   notifyNewSupportMessage,

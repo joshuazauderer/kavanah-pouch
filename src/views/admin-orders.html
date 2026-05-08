@@ -41,6 +41,9 @@
     .badge-exported{background:#dbeafe;color:#1d4ed8}
     .badge-shipped{background:#dcfce7;color:#16a34a}
     .badge-canceled{background:#f3f4f6;color:#6b7280}
+    .badge-email-sent{background:#dcfce7;color:#16a34a}
+    .badge-email-pending{background:#fef9c3;color:#854d0e}
+    .badge-email-failed{background:#fee2e2;color:#dc2626}
     .action-link{color:var(--gold);font-weight:700;font-size:.82rem}
     .empty{text-align:center;padding:3rem;color:var(--muted)}
   </style>
@@ -81,10 +84,10 @@
           <thead>
             <tr>
               <th>Order #</th><th>Date</th><th>Customer</th><th>Pouches</th>
-              <th>Total</th><th>Payment</th><th>Fulfillment</th><th>Tracking</th><th></th>
+              <th>Total</th><th>Payment</th><th>Fulfillment</th><th>Email</th><th>Tracking</th><th></th>
             </tr>
           </thead>
-          <tbody id="orders-body"><tr><td colspan="9" class="empty">Loading…</td></tr></tbody>
+          <tbody id="orders-body"><tr><td colspan="10" class="empty">Loading…</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -99,10 +102,11 @@
     function badge(val,map){ const cls=map[val]||''; return `<span class="badge ${cls}">${val}</span>`; }
     const payMap={paid:'badge-paid',pending:'badge-pending',refunded:'badge-refunded',failed:'badge-refunded',canceled:'badge-canceled'};
     const fulMap={unfulfilled:'badge-unfulfilled',exported:'badge-exported',shipped:'badge-shipped',canceled:'badge-canceled'};
+    const emailMap={sent:'badge-email-sent',pending:'badge-email-pending',failed:'badge-email-failed'};
 
     function render(orders){
       const tbody = document.getElementById('orders-body');
-      if(!orders.length){ tbody.innerHTML='<tr><td colspan="9" class="empty">No orders found.</td></tr>'; return; }
+      if(!orders.length){ tbody.innerHTML='<tr><td colspan="10" class="empty">No orders found.</td></tr>'; return; }
       tbody.innerHTML = orders.map(o=>`
         <tr>
           <td><strong>${o.order_number}</strong></td>
@@ -112,6 +116,7 @@
           <td>${fmt(o.total_cents)}</td>
           <td>${badge(o.payment_status,payMap)}</td>
           <td>${badge(o.fulfillment_status,fulMap)}</td>
+          <td>${badge(o.order_confirmation_email_status||'pending',emailMap)}</td>
           <td style="font-size:.8rem;max-width:120px;word-break:break-all">${o.tracking_number||'—'}</td>
           <td><a class="action-link" href="/admin/orders/${o.id}">View →</a></td>
         </tr>`).join('');
