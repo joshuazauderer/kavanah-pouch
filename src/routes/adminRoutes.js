@@ -264,4 +264,15 @@ router.get('/admin/api/feedback', requireAdmin, async (req, res) => {
   }
 });
 
+// TEMP: delete all orders (remove after use)
+router.delete('/admin/api/orders', requireAdmin, async (req, res) => {
+  try {
+    await db.query('DELETE FROM order_items');
+    await db.query('DELETE FROM orders');
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
