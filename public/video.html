@@ -57,14 +57,14 @@
       justify-content: center;
     }
 
+    /* Page fills 92% of viewport width, hard cap at 1600px */
     .page {
-      width: 100%;
-      max-width: 1200px;
-      padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 4vw, 3rem);
+      width: min(92vw, 1600px);
+      padding: clamp(1.2rem, 3vh, 2.5rem) 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: clamp(1.2rem, 2.5vw, 2rem);
+      gap: clamp(1rem, 2vh, 1.8rem);
     }
 
     /* ── Wordmark ──────────────────────────────────────────────── */
@@ -78,7 +78,7 @@
     }
     .wordmark-name {
       font-family: var(--serif);
-      font-size: clamp(1.8rem, 4vw, 3.2rem);
+      font-size: clamp(1.6rem, 3.5vw, 3rem);
       font-weight: 700;
       letter-spacing: -0.02em;
       line-height: 1;
@@ -86,35 +86,32 @@
     }
     .wordmark-name span { color: var(--gold); }
     .wordmark-tagline {
-      font-size: clamp(0.65rem, 1.2vw, 0.82rem);
+      font-size: clamp(0.62rem, 1vw, 0.8rem);
       font-weight: 700;
       letter-spacing: 0.14em;
       text-transform: uppercase;
       color: rgba(214,162,58,.75);
     }
 
-    /* ── Video ─────────────────────────────────────────────────── */
+    /* ── Video — fills page width, height capped so it fits screen ── */
     .video-wrap {
       width: 100%;
-      position: relative;
-      border-radius: clamp(10px, 1.5vw, 18px);
+      /* aspect-ratio enforces 16:9 without the padding hack */
+      aspect-ratio: 16 / 9;
+      /* Ensure the video doesn't overflow the viewport vertically;
+         leave ~180px for wordmark + CTA + gaps */
+      max-height: calc(100vh - 180px);
+      border-radius: clamp(8px, 1vw, 16px);
       overflow: hidden;
       box-shadow:
         0 0 0 1px rgba(214,162,58,.22),
         0 40px 100px rgba(0,0,0,.55);
       background: #000;
     }
-    .video-wrap::before {
-      /* 16:9 aspect ratio */
-      content: "";
-      display: block;
-      padding-top: 56.25%;
-    }
     .video-wrap video {
-      position: absolute;
-      inset: 0;
       width: 100%;
       height: 100%;
+      display: block;
       object-fit: contain;
     }
 
@@ -124,10 +121,10 @@
       background: var(--gold);
       color: var(--navy);
       font-family: var(--sans);
-      font-size: clamp(0.9rem, 1.5vw, 1.05rem);
+      font-size: clamp(0.88rem, 1.2vw, 1.05rem);
       font-weight: 800;
       letter-spacing: 0.02em;
-      padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1.6rem, 3vw, 2.4rem);
+      padding: 0.85rem 2.2rem;
       border-radius: 999px;
       text-decoration: none;
       box-shadow: 0 10px 36px rgba(214,162,58,.30);
@@ -142,24 +139,15 @@
 
     /* ── Footer note ───────────────────────────────────────────── */
     .footer-note {
-      font-size: 0.78rem;
-      color: rgba(248,241,223,.35);
+      font-size: 0.75rem;
+      color: rgba(248,241,223,.32);
       letter-spacing: 0.04em;
     }
 
-    /* ── Responsive breakpoints ────────────────────────────────── */
-    /* Tablet */
-    @media (max-width: 900px) {
-      .page { max-width: 720px; }
-    }
-
-    /* Mobile */
+    /* ── Mobile ────────────────────────────────────────────────── */
     @media (max-width: 600px) {
-      .page {
-        padding: 1.4rem 1rem;
-        gap: 1.2rem;
-      }
-      .video-wrap { border-radius: 10px; }
+      .page { width: 96vw; }
+      .video-wrap { max-height: calc(100vh - 160px); }
     }
   </style>
 </head>
