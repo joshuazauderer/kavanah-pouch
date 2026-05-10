@@ -214,7 +214,10 @@
             </div>
           </td>
           <td style="text-align:center">${o.total_pouches||1}</td>
-          <td style="white-space:nowrap">${fmt(o.total_cents)}</td>
+          <td style="white-space:nowrap">
+            ${fmt(o.total_cents)}
+            ${o.discount_code?`<br><span style="font-size:.74rem;color:#16a34a;font-weight:700">${escHtml(o.discount_code)}</span>`:''}
+          </td>
           <td>${badge(o.payment_status,payMap)}</td>
           <td>${badge(o.fulfillment_status,fulMap)}</td>
           <td>${badge(o.order_confirmation_email_status||'pending',emailMap)}</td>

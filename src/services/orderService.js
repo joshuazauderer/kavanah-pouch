@@ -37,10 +37,27 @@ async function createOrderFromStripe(session) {
 
     const orderNumber = generateOrderNumber();
 
-    const subtotalCents  = session.amount_subtotal ?? (session.amount_total || 0);
-    const shippingCents  = session.total_details?.amount_shipping ?? 0;
-    const taxCents       = session.total_details?.amount_tax ?? 0;
-    const totalCents     = session.amount_total || 0;
+    const subtotalCents    = session.amount_subtotal ?? (session.amount_total || 0);
+    const shippingCents    = session.total_details?.amount_shipping ?? 0;
+    const taxCents         = session.total_details?.amount_tax ?? 0;
+    const discountCents    = session.total_details?.amount_discount ?? 0;
+    const totalCents       = session.amount_total || 0;
+
+    // Extract the human-readable promotion code string if the session was
+    // retrieved with expand: ['discounts.discount.promotion_code'].
+    // Falls back to the coupon name, then null, if expansion wasn't done.
+    let discountCode = null;
+    const firstDiscount = session.discounts?.[0];
+    if (firstDiscount) {
+      const discountObj = typeof firstDiscount.discount === 'object'
+        ? firstDiscount.discount
+        : null;
+      if (discountObj?.promotion_code && typeof discountObj.promotion_code === 'object') {
+        discountCode = discountObj.promotion_code.code || null;
+      } else if (discountObj?.coupon?.name) {
+        discountCode = discountObj.coupon.name;
+      }
+    }
 
     const { rows: [order] } = await client.query(
       `INSERT INTO orders (
@@ -48,9 +65,10 @@ async function createOrderFromStripe(session) {
         customer_email, customer_name,
         shipping_name, shipping_address_line1, shipping_address_line2,
         shipping_city, shipping_state, shipping_postal_code, shipping_country,
-        subtotal_cents, shipping_cents, tax_cents, total_cents,
+        subtotal_cents, shipping_cents, tax_cents, discount_amount_cents,
+        discount_code, total_cents,
         currency, payment_status, fulfillment_status
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'paid','unfulfilled')
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,'paid','unfulfilled')
       RETURNING *`,
       [
         orderNumber,
@@ -68,6 +86,8 @@ async function createOrderFromStripe(session) {
         subtotalCents,
         shippingCents,
         taxCents,
+        discountCents,
+        discountCode,
         totalCents,
         session.currency || 'usd',
       ]

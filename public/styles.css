@@ -419,6 +419,18 @@ h3 {
   margin: 0 0 0.5rem;
 }
 .price-shipping.free-shipping { color: #16a34a; }
+.promo-note {
+  margin: 0.9rem 0 0;
+  padding: 0.55rem 0.75rem;
+  background: rgba(214, 162, 58, 0.10);
+  border: 1px solid rgba(214, 162, 58, 0.30);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: var(--navy);
+  line-height: 1.45;
+  text-align: center;
+}
+.promo-note strong { color: #7a4e00; }
 .badge {
   display: inline-flex;
   margin-bottom: 1rem;

@@ -1,5 +1,5 @@
 const express = require('express');
-const { constructWebhookEvent } = require('../services/stripeService');
+const { constructWebhookEvent, stripe } = require('../services/stripeService');
 const { createOrderFromStripe } = require('../services/orderService');
 const { notifyNewOrder, sendOrderConfirmationEmail } = require('../services/emailService');
 
@@ -20,8 +20,23 @@ router.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), as
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object;
+        let session = event.data.object;
         if (session.payment_status === 'paid') {
+          // If the session has a discount applied, re-fetch it with the
+          // promotion_code expanded so we can record the coupon code string.
+          // The webhook payload contains total_details.amount_discount but
+          // only the discount object ID, not the human-readable code.
+          if ((session.total_details?.amount_discount ?? 0) > 0) {
+            try {
+              session = await stripe.checkout.sessions.retrieve(session.id, {
+                expand: ['discounts.discount.promotion_code'],
+              });
+            } catch (expandErr) {
+              // Non-fatal: fall back to the original session without expansion
+              console.error('Could not expand session discounts:', expandErr.message);
+            }
+          }
+
           const order = await createOrderFromStripe(session);
           if (order) {
             console.log(`Order created: ${order.order_number}`);

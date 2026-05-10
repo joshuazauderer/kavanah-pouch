@@ -111,7 +111,8 @@
               <span>Subtotal: ${fmt(o.subtotal_cents)}</span>
               <span>Shipping: ${o.shipping_cents!=null?(o.shipping_cents===0?'Free':fmt(o.shipping_cents)):'—'}</span>
               ${o.tax_cents?`<span>Tax: ${fmt(o.tax_cents)}</span>`:''}
-              <strong style="color:var(--ink);font-size:.9rem">Total: ${fmt(o.total_cents)}</strong>
+              ${(o.discount_amount_cents>0)?`<span style="color:#16a34a">Discount${o.discount_code?' ('+o.discount_code+')':''}: −${fmt(o.discount_amount_cents)}</span>`:''}
+              <strong style="color:var(--ink);font-size:.9rem">Total Charged: ${fmt(o.total_cents)}</strong>
             </div>
           </div>
         </div>
@@ -185,6 +186,8 @@
             <h2>Stripe IDs</h2>
             <div class="field"><span class="k">Session</span><span class="v" style="font-size:.78rem">${f(o.stripe_checkout_session_id)}</span></div>
             <div class="field"><span class="k">Payment Intent</span><span class="v" style="font-size:.78rem">${f(o.stripe_payment_intent_id)}</span></div>
+            ${o.discount_code?`<div class="field"><span class="k">Promo Code</span><span class="v" style="font-weight:700;color:#16a34a">${f(o.discount_code)}</span></div>`:''}
+            ${(o.discount_amount_cents>0)?`<div class="field"><span class="k">Discount</span><span class="v" style="color:#16a34a">−${fmt(o.discount_amount_cents)}</span></div>`:''}
           </div>
         </div>`;
       // Resend confirmation email

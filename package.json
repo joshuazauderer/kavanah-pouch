@@ -7,7 +7,8 @@
     "start": "node src/runMigrations.js && node src/seedAdmin.js && node src/server.js",
     "dev": "nodemon src/server.js",
     "migrate": "node src/runMigrations.js",
-    "seed-admin": "node src/seedAdmin.js"
+    "seed-admin": "node src/seedAdmin.js",
+    "setup-promo": "node scripts/setup-stripe-promo.js"
   },
   "engines": {
     "node": ">=20"

@@ -13,6 +13,11 @@ async function createCheckoutSession(priceKey) {
 
   if (!shippingRateId) throw new Error(`Shipping rate not configured for: ${priceKey}`);
 
+  // Only the single-pouch checkout supports the DAVEN299 launch promotion code.
+  // 2-pack and 3-pack checkouts deliberately do NOT enable promotion codes so
+  // the coupon cannot be applied to multi-unit orders.
+  const allowPromoCodes = priceKey === 'one_pouch';
+
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
     line_items: [{ price: priceId, quantity: 1 }],
@@ -23,6 +28,7 @@ async function createCheckoutSession(priceKey) {
     payment_intent_data: {
       statement_descriptor: 'KAVANAHPOUCH.COM',
     },
+    ...(allowPromoCodes && { allow_promotion_codes: true }),
     metadata: { priceKey },
     success_url: `${config.appBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${config.appBaseUrl}/#buy`,
