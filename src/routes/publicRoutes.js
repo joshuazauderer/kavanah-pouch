@@ -30,4 +30,8 @@ router.get('/terms', (req, res) => {
   res.sendFile(path.join(__dirname, '../../public/terms.html'));
 });
 
+router.get('/video', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../public/video.html'));
+});
+
 module.exports = router;
