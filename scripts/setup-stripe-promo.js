@@ -107,7 +107,7 @@ async function main() {
     console.log(`  Amount off:  $${(coupon.amount_off / 100).toFixed(2)}`);
   } else {
     coupon = await stripe.coupons.create({
-      name:       'Kavanah Pouch Launch Discount - $2.99 Off',
+      name:       'Kavanah Pouch Launch - $2.99 Off',
       amount_off: 299,
       currency:   'usd',
       duration:   'once',
