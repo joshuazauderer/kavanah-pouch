@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Analytics | Kavanah Pouch Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <style>
+    *{box-sizing:border-box}
+    :root{--navy:#001f42;--gold:#d6a23a;--cream:#f8f1df;--ink:#132133;--muted:#667085;--line:rgba(19,33,51,.12);--sidebar:220px}
+    body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f4f6f9;color:var(--ink);display:flex;min-height:100vh}
+    a{color:inherit;text-decoration:none}
+    /* Sidebar */
+    .sidebar{width:var(--sidebar);background:var(--navy);color:var(--cream);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+    .sidebar-brand{padding:1.4rem 1.2rem 1rem;font-weight:800;font-size:1rem;letter-spacing:.04em;color:var(--gold);border-bottom:1px solid rgba(248,241,223,.12)}
+    .sidebar-nav{padding:.5rem 0;flex:1}
+    .sidebar-nav a{display:flex;align-items:center;gap:.6rem;padding:.7rem 1.2rem;font-size:.88rem;font-weight:600;color:rgba(248,241,223,.78);transition:background 150ms,color 150ms}
+    .sidebar-nav a:hover,.sidebar-nav a.active{background:rgba(214,162,58,.14);color:var(--gold)}
+    .sidebar-nav a.active{border-left:3px solid var(--gold)}
+    .sidebar-footer{padding:1rem 1.2rem;border-top:1px solid rgba(248,241,223,.12)}
+    .sidebar-footer form button{background:none;border:none;color:rgba(248,241,223,.5);font:inherit;font-size:.82rem;cursor:pointer;padding:0}
+    .sidebar-footer form button:hover{color:var(--cream)}
+    /* Main */
+    .main{flex:1;overflow:auto;min-width:0}
+    .topbar{background:#fff;border-bottom:1px solid var(--line);padding:.9rem 1.6rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+    .topbar h1{margin:0;font-size:1.2rem;font-weight:800}
+    .content{padding:1.6rem;display:flex;flex-direction:column;gap:1.6rem}
+    /* Range buttons */
+    .range-bar{display:flex;gap:.5rem;flex-wrap:wrap}
+    .range-btn{padding:.4rem .9rem;border-radius:999px;border:1px solid var(--line);background:#fff;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;color:var(--muted);transition:all 150ms}
+    .range-btn.active{background:var(--navy);color:var(--cream);border-color:var(--navy)}
+    /* Cards */
+    .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:1rem}
+    .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.2rem 1.4rem;box-shadow:0 2px 8px rgba(0,31,66,.05)}
+    .card .label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.4rem}
+    .card .value{font-size:1.8rem;font-weight:800;color:var(--navy);line-height:1}
+    /* Section card */
+    .section-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,31,66,.05)}
+    .section-card h2{margin:0 0 1rem;font-size:1rem;font-weight:800;color:var(--navy)}
+    /* Table */
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;min-width:400px}
+    th{text-align:left;padding:.55rem .75rem;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);border-bottom:2px solid var(--line);white-space:nowrap}
+    td{padding:.6rem .75rem;border-bottom:1px solid var(--line);font-size:.85rem;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:#f9fafb}
+    /* Chart */
+    .chart-wrap{position:relative;height:260px}
+    /* Funnel */
+    .funnel-steps{display:flex;flex-direction:column;gap:.75rem}
+    .funnel-step{display:flex;align-items:center;gap:1rem}
+    .funnel-label{flex:0 0 160px;font-size:.85rem;font-weight:600;color:var(--ink)}
+    .funnel-bar-wrap{flex:1;background:#f0f2f5;border-radius:999px;height:28px;overflow:hidden;position:relative}
+    .funnel-bar{height:100%;background:var(--navy);border-radius:999px;transition:width .4s ease;display:flex;align-items:center;padding-left:.75rem;min-width:30px}
+    .funnel-bar span{color:#fff;font-size:.75rem;font-weight:700;white-space:nowrap}
+    .funnel-pct{flex:0 0 56px;font-size:.8rem;font-weight:700;color:var(--muted);text-align:right}
+    /* Device bars */
+    .device-bars{display:flex;flex-direction:column;gap:.75rem}
+    .device-row{display:flex;align-items:center;gap:1rem}
+    .device-name{flex:0 0 80px;font-size:.85rem;font-weight:600;text-transform:capitalize}
+    .device-bar-wrap{flex:1;background:#f0f2f5;border-radius:999px;height:20px;overflow:hidden}
+    .device-bar{height:100%;background:var(--gold);border-radius:999px;transition:width .4s ease}
+    .device-pct{flex:0 0 48px;font-size:.8rem;font-weight:700;color:var(--muted);text-align:right}
+    /* Badge */
+    .badge{display:inline-flex;padding:.15rem .5rem;border-radius:999px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:#dbeafe;color:#1d4ed8}
+    /* Loading / error */
+    .loading{color:var(--muted);font-size:.9rem}
+    .empty{color:var(--muted);font-size:.85rem;padding:1.5rem 0;text-align:center}
+    /* Event type badge */
+    .evt{display:inline-flex;padding:.12rem .45rem;border-radius:6px;font-size:.7rem;font-weight:700;letter-spacing:.03em;white-space:nowrap}
+    .evt-page_view{background:#dbeafe;color:#1d4ed8}
+    .evt-product_view{background:#dcfce7;color:#16a34a}
+    .evt-video_play{background:#fef9c3;color:#854d0e}
+    .evt-checkout_started{background:#fde8d8;color:#9a3412}
+    .evt-checkout_completed{background:#dcfce7;color:#16a34a}
+    .evt-bulk_inquiry_submitted{background:#f3e8ff;color:#6b21a8}
+    .evt-other{background:#f3f4f6;color:#6b7280}
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-brand">&#x2B21; Kavanah Pouch</div>
+    <nav class="sidebar-nav">
+      <a href="/admin">Dashboard</a>
+      <a href="/admin/orders">Orders</a>
+      <a href="/admin/inventory">Inventory</a>
+      <a href="/admin/waitlist">Waitlist</a>
+      <a href="/admin/bulk-inquiries">Bulk Inquiries</a>
+      <a href="/admin/support">Support</a>
+      <a href="/admin/feedback">Feedback</a>
+      <a href="/admin/analytics" class="active">Analytics</a>
+      <a href="/admin/settings">Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <form method="POST" action="/admin/logout"><button type="submit">Sign out</button></form>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <h1>Analytics</h1>
+      <div class="range-bar" id="range-bar">
+        <button class="range-btn" data-range="today">Today</button>
+        <button class="range-btn active" data-range="7d">7 Days</button>
+        <button class="range-btn" data-range="30d">30 Days</button>
+        <button class="range-btn" data-range="all">All Time</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Summary cards -->
+      <div class="cards-grid" id="summary-cards">
+        <div class="card"><div class="label">Loading&hellip;</div><div class="value">&mdash;</div></div>
+      </div>
+
+      <!-- Daily chart -->
+      <div class="section-card">
+        <h2>Daily Traffic</h2>
+        <div class="chart-wrap"><canvas id="daily-chart"></canvas></div>
+      </div>
+
+      <!-- Referrers + UTM side by side -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.6rem">
+        <div class="section-card" style="min-width:0">
+          <h2>Top Referrers</h2>
+          <div class="table-wrap" id="referrers-table"><p class="loading">Loading&hellip;</p></div>
+        </div>
+        <div class="section-card" style="min-width:0">
+          <h2>UTM Breakdown</h2>
+          <div class="table-wrap" id="utm-table"><p class="loading">Loading&hellip;</p></div>
+        </div>
+      </div>
+
+      <!-- Top pages + Device breakdown -->
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.6rem">
+        <div class="section-card" style="min-width:0">
+          <h2>Top Pages</h2>
+          <div class="table-wrap" id="pages-table"><p class="loading">Loading&hellip;</p></div>
+        </div>
+        <div class="section-card" style="min-width:0">
+          <h2>Devices</h2>
+          <div class="device-bars" id="device-bars"><p class="loading">Loading&hellip;</p></div>
+        </div>
+      </div>
+
+      <!-- Funnel -->
+      <div class="section-card">
+        <h2>Conversion Funnel</h2>
+        <div class="funnel-steps" id="funnel-steps"><p class="loading">Loading&hellip;</p></div>
+      </div>
+
+      <!-- Recent events -->
+      <div class="section-card">
+        <h2>Recent Events (last 50)</h2>
+        <div class="table-wrap" id="recent-table"><p class="loading">Loading&hellip;</p></div>
+      </div>
+
+      <!-- Coupon stats -->
+      <div class="section-card">
+        <h2>Coupon / Promo Code Usage</h2>
+        <div class="table-wrap" id="coupon-table"><p class="loading">Loading&hellip;</p></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    var currentRange = '7d';
+    var dailyChart = null;
+
+    // ── Range buttons ────────────────────────────────────────────────────────────
+    document.getElementById('range-bar').addEventListener('click', function (e) {
+      var btn = e.target.closest('.range-btn');
+      if (!btn) return;
+      document.querySelectorAll('.range-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentRange = btn.dataset.range;
+      loadAll();
+    });
+
+    // ── Helpers ──────────────────────────────────────────────────────────────────
+    function fmt$$(cents) {
+      return '$' + (cents / 100).toFixed(2);
+    }
+    function fmtPct(v) {
+      return parseFloat(v).toFixed(1) + '%';
+    }
+    function esc(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function evtBadge(type) {
+      var cls = 'evt-' + (type || 'other');
+      if (!document.querySelector('style').textContent.includes(cls)) cls = 'evt-other';
+      return '<span class="evt ' + cls + '">' + esc(type) + '</span>';
+    }
+    function fmtTime(ts) {
+      if (!ts) return '';
+      var d = new Date(ts);
+      return d.toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    }
+
+    // ── API fetch helper ─────────────────────────────────────────────────────────
+    function api(path) {
+      return fetch('/admin/api/analytics/' + path + '?range=' + currentRange).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      });
+    }
+
+    // ── Render functions ─────────────────────────────────────────────────────────
+    function renderSummary(d) {
+      var cards = [
+        { label: 'Unique Visitors', value: d.unique_visitors.toLocaleString() },
+        { label: 'Page Views', value: d.page_views.toLocaleString() },
+        { label: 'Sessions', value: d.sessions.toLocaleString() },
+        { label: 'Orders', value: d.total_orders.toLocaleString() },
+        { label: 'Conversion Rate', value: fmtPct(d.conversion_rate) },
+        { label: 'Revenue', value: fmt$$(d.gross_revenue_cents) },
+        { label: 'Avg Order Value', value: fmt$$(d.avg_order_value_cents) },
+        { label: 'Bulk Inquiries', value: d.bulk_inquiries.toLocaleString() },
+      ];
+      document.getElementById('summary-cards').innerHTML = cards.map(function (c) {
+        return '<div class="card"><div class="label">' + esc(c.label) + '</div><div class="value">' + esc(c.value) + '</div></div>';
+      }).join('');
+    }
+
+    function renderDailyChart(rows) {
+      var labels = rows.map(function (r) { return r.date; });
+      var pvData = rows.map(function (r) { return r.page_views; });
+      var uvData = rows.map(function (r) { return r.unique_visitors; });
+
+      if (dailyChart) dailyChart.destroy();
+
+      var ctx = document.getElementById('daily-chart').getContext('2d');
+      dailyChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Page Views',
+              data: pvData,
+              backgroundColor: 'rgba(0,31,66,0.75)',
+              borderRadius: 4,
+            },
+            {
+              label: 'Unique Visitors',
+              data: uvData,
+              backgroundColor: 'rgba(214,162,58,0.7)',
+              borderRadius: 4,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+          },
+          scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true, grid: { color: 'rgba(19,33,51,.06)' } },
+          },
+        },
+      });
+    }
+
+    function renderReferrers(rows) {
+      var el = document.getElementById('referrers-table');
+      if (!rows || !rows.length) { el.innerHTML = '<p class="empty">No referrer data.</p>'; return; }
+      el.innerHTML = '<table><thead><tr>'
+        + '<th>Domain</th><th>Source</th><th>Sessions</th><th>Pageviews</th><th>Orders</th><th>Conv%</th>'
+        + '</tr></thead><tbody>'
+        + rows.map(function (r) {
+          return '<tr>'
+            + '<td>' + esc(r.referrer_domain || 'Direct') + '</td>'
+            + '<td>' + esc(r.source_category) + '</td>'
+            + '<td>' + r.sessions.toLocaleString() + '</td>'
+            + '<td>' + r.page_views.toLocaleString() + '</td>'
+            + '<td>' + r.orders + '</td>'
+            + '<td>' + fmtPct(r.conversion_rate) + '</td>'
+            + '</tr>';
+        }).join('')
+        + '</tbody></table>';
+    }
+
+    function renderUtm(rows) {
+      var el = document.getElementById('utm-table');
+      if (!rows || !rows.length) { el.innerHTML = '<p class="empty">No UTM data.</p>'; return; }
+      el.innerHTML = '<table><thead><tr>'
+        + '<th>Source</th><th>Medium</th><th>Campaign</th><th>Sessions</th><th>Orders</th><th>Revenue</th><th>Conv%</th>'
+        + '</tr></thead><tbody>'
+        + rows.map(function (r) {
+          return '<tr>'
+            + '<td>' + esc(r.utm_source || '—') + '</td>'
+            + '<td>' + esc(r.utm_medium || '—') + '</td>'
+            + '<td>' + esc(r.utm_campaign || '—') + '</td>'
+            + '<td>' + r.sessions + '</td>'
+            + '<td>' + r.orders + '</td>'
+            + '<td>' + fmt$$(r.revenue_cents) + '</td>'
+            + '<td>' + fmtPct(r.conversion_rate) + '</td>'
+            + '</tr>';
+        }).join('')
+        + '</tbody></table>';
+    }
+
+    function renderPages(rows) {
+      var el = document.getElementById('pages-table');
+      if (!rows || !rows.length) { el.innerHTML = '<p class="empty">No page data.</p>'; return; }
+      el.innerHTML = '<table><thead><tr>'
+        + '<th>Path</th><th>Pageviews</th><th>Unique Visitors</th>'
+        + '</tr></thead><tbody>'
+        + rows.map(function (r) {
+          return '<tr>'
+            + '<td><code style="font-size:.82rem">' + esc(r.page_path) + '</code></td>'
+            + '<td>' + r.page_views.toLocaleString() + '</td>'
+            + '<td>' + r.unique_visitors.toLocaleString() + '</td>'
+            + '</tr>';
+        }).join('')
+        + '</tbody></table>';
+    }
+
+    function renderDevices(rows) {
+      var el = document.getElementById('device-bars');
+      if (!rows || !rows.length) { el.innerHTML = '<p class="empty">No device data.</p>'; return; }
+      el.innerHTML = rows.map(function (r) {
+        return '<div class="device-row">'
+          + '<div class="device-name">' + esc(r.device_type) + '</div>'
+          + '<div class="device-bar-wrap"><div class="device-bar" style="width:' + r.pct + '%"></div></div>'
+          + '<div class="device-pct">' + r.pct + '%</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    function renderFunnel(d) {
+      var el = document.getElementById('funnel-steps');
+      var steps = [
+        { label: 'Product Views', value: d.product_views, pct: '100', isBase: true },
+        { label: 'Video Plays', value: d.video_plays, pct: d.pct_video },
+        { label: 'Checkout Started', value: d.checkout_started, pct: d.pct_checkout },
+        { label: 'Checkout Completed', value: d.checkout_completed, pct: d.pct_completed },
+        { label: 'Bulk Inquiries', value: d.bulk_inquiries, pct: d.pct_bulk },
+      ];
+      var maxVal = d.product_views || 1;
+      el.innerHTML = steps.map(function (s) {
+        var barPct = Math.min(100, Math.round((s.value / maxVal) * 100));
+        return '<div class="funnel-step">'
+          + '<div class="funnel-label">' + esc(s.label) + '</div>'
+          + '<div class="funnel-bar-wrap">'
+          + '<div class="funnel-bar" style="width:' + barPct + '%"><span>' + s.value.toLocaleString() + '</span></div>'
+          + '</div>'
+          + '<div class="funnel-pct">' + (s.isBase ? '—' : fmtPct(s.pct)) + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    function renderRecent(rows) {
+      var el = document.getElementById('recent-table');
+      if (!rows || !rows.length) { el.innerHTML = '<p class="empty">No events yet.</p>'; return; }
+      var evtClasses = ['page_view','product_view','video_play','checkout_started','checkout_completed','bulk_inquiry_submitted'];
+      el.innerHTML = '<table><thead><tr>'
+        + '<th>Time</th><th>Event</th><th>Page</th><th>Referrer Domain</th><th>Device</th>'
+        + '</tr></thead><tbody>'
+        + rows.map(function (r) {
+          var cls = evtClasses.indexOf(r.event_type) >= 0 ? 'evt-' + r.event_type : 'evt-other';
+          return '<tr>'
+            + '<td style="white-space:nowrap;color:var(--muted);font-size:.78rem">' + fmtTime(r.created_at) + '</td>'
+            + '<td><span class="evt ' + cls + '">' + esc(r.event_type) + '</span></td>'
+            + '<td><code style="font-size:.78rem">' + esc(r.page_path || '') + '</code></td>'
+            + '<td style="font-size:.8rem;color:var(--muted)">' + esc(extractDomain(r.referrer) || '') + '</td>'
+            + '<td style="font-size:.8rem;text-transform:capitalize">' + esc(r.device_type || '') + '</td>'
+            + '</tr>';
+        }).join('')
+        + '</tbody></table>';
+    }
+
+    function extractDomain(url) {
+      if (!url) return '';
+      try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return ''; }
+    }
+
+    function renderCoupons(rows) {
+      var el = document.getElementById('coupon-table');
+      if (!rows || !rows.length) { el.innerHTML = '<p class="empty">No coupon data.</p>'; return; }
+      el.innerHTML = '<table><thead><tr>'
+        + '<th>Code</th><th>Uses</th><th>Revenue</th><th>Total Discounted</th>'
+        + '</tr></thead><tbody>'
+        + rows.map(function (r) {
+          return '<tr>'
+            + '<td><strong>' + esc(r.discount_code) + '</strong></td>'
+            + '<td>' + r.uses + '</td>'
+            + '<td>' + fmt$$(r.revenue_cents) + '</td>'
+            + '<td>' + fmt$$(r.total_discount_cents) + '</td>'
+            + '</tr>';
+        }).join('')
+        + '</tbody></table>';
+    }
+
+    // ── Load all data ────────────────────────────────────────────────────────────
+    function loadAll() {
+      // Summary
+      api('summary').then(renderSummary).catch(function () {
+        document.getElementById('summary-cards').innerHTML = '<p style="color:red">Could not load summary.</p>';
+      });
+
+      // Daily chart
+      api('daily').then(renderDailyChart).catch(function () {});
+
+      // Referrers
+      api('referrers').then(renderReferrers).catch(function () {
+        document.getElementById('referrers-table').innerHTML = '<p style="color:red">Error loading referrers.</p>';
+      });
+
+      // UTM
+      api('utm').then(renderUtm).catch(function () {
+        document.getElementById('utm-table').innerHTML = '<p style="color:red">Error loading UTM data.</p>';
+      });
+
+      // Pages
+      api('pages').then(renderPages).catch(function () {
+        document.getElementById('pages-table').innerHTML = '<p style="color:red">Error loading pages.</p>';
+      });
+
+      // Devices
+      api('devices').then(renderDevices).catch(function () {
+        document.getElementById('device-bars').innerHTML = '<p style="color:red">Error loading devices.</p>';
+      });
+
+      // Funnel
+      api('funnel').then(renderFunnel).catch(function () {
+        document.getElementById('funnel-steps').innerHTML = '<p style="color:red">Error loading funnel.</p>';
+      });
+
+      // Recent events
+      api('recent').then(renderRecent).catch(function () {
+        document.getElementById('recent-table').innerHTML = '<p style="color:red">Error loading events.</p>';
+      });
+
+      // Coupons (no range filter)
+      fetch('/admin/api/analytics/coupons').then(function (r) { return r.json(); }).then(renderCoupons).catch(function () {
+        document.getElementById('coupon-table').innerHTML = '<p style="color:red">Error loading coupon data.</p>';
+      });
+    }
+
+    loadAll();
+  </script>
+</body>
+</html>

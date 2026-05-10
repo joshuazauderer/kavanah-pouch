@@ -3,7 +3,7 @@ const config = require('../config');
 
 const stripe = Stripe(config.stripe.secretKey);
 
-async function createCheckoutSession(priceKey) {
+async function createCheckoutSession(priceKey, { visitorId, sessionId } = {}) {
   const priceId = config.stripe.prices[priceKey];
   if (!priceId) throw new Error(`Unknown priceKey: ${priceKey}`);
 
@@ -30,7 +30,11 @@ async function createCheckoutSession(priceKey) {
       statement_descriptor: 'KAVANAHPOUCH.COM',
     },
     ...(allowPromoCodes && { allow_promotion_codes: true }),
-    metadata: { priceKey },
+    metadata: {
+      priceKey,
+      anonymous_visitor_id: visitorId || '',
+      session_id: sessionId || '',
+    },
     success_url: `${config.appBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${config.appBaseUrl}/#buy`,
   });

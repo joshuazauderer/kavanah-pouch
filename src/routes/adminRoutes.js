@@ -13,6 +13,10 @@ const {
 const { getInventory, setInventory } = require('../services/inventoryService');
 const { exportPirateShipCsv } = require('../services/csvService');
 const { sendOrderConfirmationEmail, sendPasswordResetEmail } = require('../services/emailService');
+const {
+  getSummary, getDailyStats, getTopReferrers, getTopPages,
+  getDeviceBreakdown, getFunnel, getRecentEvents, getUtmStats, getCouponStats,
+} = require('../services/analyticsService');
 
 const router = express.Router();
 
@@ -353,6 +357,62 @@ router.post('/admin/orders/:id/resend-confirmation', requireAdmin, async (req, r
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+router.get('/admin/analytics', requireAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, '../../src/views/admin-analytics.html'));
+});
+
+function analyticsRange(req) {
+  const allowed = ['today', '7d', '30d', 'all'];
+  const r = req.query.range;
+  return allowed.includes(r) ? r : '7d';
+}
+
+router.get('/admin/api/analytics/summary', requireAdmin, async (req, res) => {
+  try { res.json(await getSummary(analyticsRange(req))); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/admin/api/analytics/daily', requireAdmin, async (req, res) => {
+  try { res.json(await getDailyStats(analyticsRange(req))); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/admin/api/analytics/referrers', requireAdmin, async (req, res) => {
+  try { res.json(await getTopReferrers(analyticsRange(req))); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/admin/api/analytics/pages', requireAdmin, async (req, res) => {
+  try { res.json(await getTopPages(analyticsRange(req))); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/admin/api/analytics/devices', requireAdmin, async (req, res) => {
+  try { res.json(await getDeviceBreakdown(analyticsRange(req))); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/admin/api/analytics/funnel', requireAdmin, async (req, res) => {
+  try { res.json(await getFunnel(analyticsRange(req))); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/admin/api/analytics/recent', requireAdmin, async (req, res) => {
+  try { res.json(await getRecentEvents(analyticsRange(req))); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/admin/api/analytics/utm', requireAdmin, async (req, res) => {
+  try { res.json(await getUtmStats(analyticsRange(req))); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/admin/api/analytics/coupons', requireAdmin, async (req, res) => {
+  try { res.json(await getCouponStats()); }
+  catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── Settings (change password) ────────────────────────────────────────────────

@@ -2,6 +2,7 @@ const express = require('express');
 const { constructWebhookEvent, stripe } = require('../services/stripeService');
 const { createOrderFromStripe } = require('../services/orderService');
 const { notifyNewOrder, sendOrderConfirmationEmail } = require('../services/emailService');
+const { trackEvent, markSessionConverted } = require('../services/analyticsService');
 
 const router = express.Router();
 
@@ -45,6 +46,18 @@ router.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), as
             sendOrderConfirmationEmail(order).catch(err =>
               console.error('Customer confirmation email error:', err.message)
             );
+            // Analytics: record checkout_completed and mark session converted
+            const meta = session.metadata || {};
+            trackEvent({
+              event_type: 'checkout_completed',
+              anonymous_visitor_id: meta.anonymous_visitor_id || null,
+              session_id: meta.session_id || null,
+              page_path: '/api/checkout',
+              metadata: { priceKey: meta.priceKey, order_id: order.id, order_number: order.order_number },
+            }).catch(() => {});
+            if (meta.session_id) {
+              markSessionConverted(meta.session_id, order.id).catch(() => {});
+            }
           }
         }
         break;

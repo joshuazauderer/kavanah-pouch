@@ -48,6 +48,7 @@ app.use(express.static(path.join(__dirname, '../public'), {
 }));
 
 // ── Routes ────────────────────────────────────────────────────────────────────
+app.use(require('./routes/analyticsRoutes'));
 app.use(require('./routes/checkoutRoutes'));
 app.use(require('./routes/formRoutes'));
 app.use(require('./routes/adminRoutes'));
