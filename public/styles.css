@@ -736,3 +736,211 @@ details p { margin: 0.75rem 0 0; color: var(--muted); }
   .brand-text             { font-size: 1.45rem; }
   .caption-line           { width: 28px; }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   BULK ORDERS SECTION
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Bulk pricing grid (4 cards) ───────────────────────────────── */
+.bulk-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.2rem;
+  margin-top: 3rem;
+}
+
+.bulk-price-card {
+  position: relative;
+  background: rgba(248, 241, 223, 0.07);
+  border: 1px solid rgba(248, 241, 223, 0.18);
+  border-radius: var(--radius);
+  padding: 2rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition: border-color 200ms, background 200ms;
+}
+.bulk-price-card:hover {
+  background: rgba(248, 241, 223, 0.11);
+  border-color: rgba(214, 162, 58, 0.38);
+}
+.bulk-price-card.featured {
+  border: 1.5px solid rgba(214, 162, 58, 0.6);
+  background: rgba(214, 162, 58, 0.08);
+}
+
+.bulk-pack-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-bottom: 0.9rem;
+  background: rgba(214, 162, 58, 0.18);
+  color: var(--gold);
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.bulk-price-card.featured .bulk-pack-badge {
+  background: rgba(214, 162, 58, 0.28);
+}
+
+.bulk-qty {
+  font-family: var(--serif);
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--cream);
+  line-height: 1.1;
+  margin-bottom: 0.2rem;
+}
+
+.bulk-price-amount {
+  font-family: var(--serif);
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: var(--cream);
+  line-height: 1;
+  margin: 0.5rem 0 0.2rem;
+}
+
+.bulk-per-pouch {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(214, 162, 58, 0.9);
+  margin-bottom: 0.9rem;
+}
+
+.bulk-price-card p {
+  font-size: 0.88rem;
+  color: rgba(248, 241, 223, 0.72);
+  line-height: 1.55;
+  margin: 0 0 0.5rem;
+  flex-grow: 1;
+}
+
+.bulk-shipping-note {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(248, 241, 223, 0.5);
+  margin: 0.4rem 0 1.2rem !important;
+  flex-grow: 0 !important;
+}
+
+.bulk-price-card .button {
+  margin-top: auto;
+  width: 100%;
+  text-align: center;
+}
+
+/* ── Bulk inquiry form section ─────────────────────────────────── */
+.bulk-inquiry-section {
+  background: var(--white);
+  border-top: 1px solid var(--line);
+}
+
+.bulk-form-wrap {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.bulk-form-card {
+  background: var(--cream-2);
+  border: 1px solid rgba(214, 162, 58, 0.22);
+  border-radius: var(--radius);
+  padding: clamp(1.8rem, 5vw, 2.8rem);
+  box-shadow: 0 24px 70px rgba(0, 31, 66, 0.08);
+}
+
+.bulk-form-card .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.bulk-form-card label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.bulk-form-card label span.required {
+  color: #dc2626;
+  margin-left: 0.15em;
+}
+
+.bulk-form-card input,
+.bulk-form-card select,
+.bulk-form-card textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--ink);
+  padding: 0.75rem 1rem;
+  outline: none;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.bulk-form-card input:focus,
+.bulk-form-card select:focus,
+.bulk-form-card textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(214, 162, 58, 0.18);
+}
+
+.bulk-form-card .radio-group {
+  display: flex;
+  gap: 1.2rem;
+  margin-top: 0.2rem;
+}
+.bulk-form-card .radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+.bulk-form-card .radio-label input[type="radio"] {
+  width: auto;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  accent-color: var(--gold);
+}
+
+.dedication-field {
+  display: none;
+}
+.dedication-field.visible {
+  display: grid;
+}
+
+.bulk-form-note {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 1.2rem;
+}
+
+/* ── Responsive: bulk pricing grid ────────────────────────────── */
+@media (max-width: 1024px) {
+  .bulk-pricing-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .bulk-pricing-grid {
+    grid-template-columns: 1fr;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .bulk-form-card .form-row {
+    grid-template-columns: 1fr;
+  }
+}

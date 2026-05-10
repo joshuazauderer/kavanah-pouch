@@ -10,30 +10,73 @@
     a{color:inherit;text-decoration:none}
     .sidebar{width:var(--sidebar);background:var(--navy);color:var(--cream);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
     .sidebar-brand{padding:1.4rem 1.2rem 1rem;font-weight:800;font-size:1rem;letter-spacing:.04em;color:var(--gold);border-bottom:1px solid rgba(248,241,223,.12)}
-    .sidebar-nav a{display:flex;align-items:center;gap:.6rem;padding:.7rem 1.2rem;font-size:.88rem;font-weight:600;color:rgba(248,241,223,.78)}
+    .sidebar-nav a{display:flex;align-items:center;gap:.6rem;padding:.7rem 1.2rem;font-size:.88rem;font-weight:600;color:rgba(248,241,223,.78);transition:background 150ms,color 150ms}
     .sidebar-nav a:hover,.sidebar-nav a.active{background:rgba(214,162,58,.14);color:var(--gold)}
     .sidebar-nav a.active{border-left:3px solid var(--gold)}
     .sidebar-footer{padding:1rem 1.2rem;border-top:1px solid rgba(248,241,223,.12)}
     .sidebar-footer form button{background:none;border:none;color:rgba(248,241,223,.5);font:inherit;font-size:.82rem;cursor:pointer;padding:0}
     .main{flex:1;overflow:auto}
-    .topbar{background:#fff;border-bottom:1px solid var(--line);padding:.9rem 1.6rem}
+    .topbar{background:#fff;border-bottom:1px solid var(--line);padding:.9rem 1.6rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
     .topbar h1{margin:0;font-size:1.2rem;font-weight:800}
-    .content{padding:1.6rem;display:grid;gap:1rem}
-    .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,31,66,.05)}
-    .card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:.75rem}
-    .card-header h3{margin:0;font-size:1rem}
-    .meta{font-size:.8rem;color:var(--muted)}
-    .badge{display:inline-flex;padding:.22rem .55rem;border-radius:999px;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+    .content{padding:1.6rem;display:grid;gap:1.2rem}
+
+    /* ── Card ─────────────────────────────── */
+    .card{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,31,66,.05)}
+    .card-top{padding:1.4rem 1.6rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
+    .card-identity h3{margin:0 0 .3rem;font-size:1rem;font-weight:800}
+    .card-identity .org{color:var(--muted);font-size:.88rem;font-weight:600}
+    .meta-row{display:flex;flex-wrap:wrap;gap:.3rem 1.2rem;font-size:.8rem;color:var(--muted);margin-top:.5rem}
+    .meta-row a{color:var(--gold);font-weight:700}
+    .card-status{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+
+    /* ── Inquiry details ───────────────────── */
+    .detail-grid{padding:0 1.6rem 1rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.4rem .8rem}
+    .detail-item{font-size:.82rem}
+    .detail-item .k{color:var(--muted);font-weight:600}
+    .detail-item .v{font-weight:500}
+    .dedication-text{padding:.5rem 1.6rem;background:#fefdf5;border-top:1px solid var(--line);font-size:.83rem;color:var(--ink);font-style:italic}
+
+    /* ── Message block ─────────────────────── */
+    .message-block{margin:0 1.6rem 1rem;padding:.8rem 1rem;background:#f9fafb;border:1px solid var(--line);border-radius:10px;font-size:.85rem;color:var(--muted);line-height:1.6;white-space:pre-wrap}
+
+    /* ── Admin panel ───────────────────────── */
+    .admin-panel{border-top:2px solid var(--line);padding:1.2rem 1.6rem;background:#fafbfc}
+    .admin-panel-title{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:1rem}
+    .admin-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem 1rem}
+    .admin-fields label{display:grid;gap:.25rem;font-size:.82rem;font-weight:700;color:var(--muted)}
+    .admin-fields input,.admin-fields select,.admin-fields textarea{
+      width:100%;border:1px solid var(--line);border-radius:8px;background:#fff;
+      color:var(--ink);padding:.5rem .7rem;font:inherit;outline:none;font-size:.85rem}
+    .admin-fields input:focus,.admin-fields select:focus,.admin-fields textarea:focus{
+      border-color:var(--gold);box-shadow:0 0 0 3px rgba(214,162,58,.14)}
+    .admin-fields .full{grid-column:1/-1}
+    .admin-actions{display:flex;align-items:center;gap:.75rem;margin-top:1rem;flex-wrap:wrap}
+    .save-result{font-size:.82rem;font-weight:700;padding:.35rem .7rem;border-radius:8px;display:none}
+    .save-result.ok{background:#dcfce7;color:#16a34a}
+    .save-result.err{background:#fee2e2;color:#dc2626}
+
+    /* ── Badges ────────────────────────────── */
+    .badge{display:inline-flex;padding:.22rem .6rem;border-radius:999px;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
     .badge-new{background:#fee2e2;color:#dc2626}
     .badge-contacted{background:#dbeafe;color:#1d4ed8}
     .badge-quoted{background:#fef9c3;color:#854d0e}
-    .badge-closed{background:#dcfce7;color:#16a34a}
+    .badge-paid{background:#dcfce7;color:#16a34a}
+    .badge-shipped{background:#dcfce7;color:#16a34a}
+    .badge-closed{background:#f3f4f6;color:#16a34a;border:1px solid #d1fae5}
     .badge-not_a_fit{background:#f3f4f6;color:#6b7280}
-    .message{font-size:.88rem;color:var(--muted);margin:.5rem 0;line-height:1.6}
-    select{border:1px solid var(--line);border-radius:8px;padding:.4rem .6rem;font:inherit;font-size:.82rem;background:#f9fafb;cursor:pointer}
+    .badge-converted{background:#dbeafe;color:#1d4ed8}
+
+    /* ── Buttons ───────────────────────────── */
+    .btn{padding:.5rem 1rem;border-radius:999px;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;border:none}
+    .btn-gold{background:var(--gold);color:var(--navy)}
+    .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
+    .btn-ghost:hover{background:#f3f4f6}
+    select.status-select{border:1px solid var(--line);border-radius:8px;padding:.4rem .7rem;font:inherit;font-size:.82rem;background:#f9fafb;cursor:pointer}
+
     .empty{text-align:center;padding:3rem;color:var(--muted)}
-    .detail-row{display:flex;flex-wrap:wrap;gap:.4rem 1.4rem;font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
-    .detail-row strong{color:var(--ink)}
+    .filters{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem}
+    .filter-btn{padding:.38rem .8rem;border-radius:999px;border:1px solid var(--line);background:#fff;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer;color:var(--muted)}
+    .filter-btn.active{background:var(--navy);color:var(--cream);border-color:var(--navy)}
   </style>
 </head>
 <body>
@@ -53,44 +96,185 @@
       <form method="POST" action="/admin/logout"><button type="submit">Sign out</button></form>
     </div>
   </aside>
-  <div class="main">
-    <div class="topbar"><h1>Bulk Inquiries</h1></div>
-    <div class="content" id="content"><p style="color:var(--muted)">Loading…</p></div>
-  </div>
-  <script>
-    const statusMap={new:'badge-new',contacted:'badge-contacted',quoted:'badge-quoted',closed:'badge-closed',not_a_fit:'badge-not_a_fit'};
-    function fmtDate(d){return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
 
-    fetch('/admin/api/bulk-inquiries').then(r=>r.json()).then(rows=>{
-      const el=document.getElementById('content');
-      if(!rows.length){el.innerHTML='<p class="empty">No bulk inquiries yet.</p>';return;}
-      el.innerHTML=rows.map(r=>`
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <h3>${r.name} ${r.organization_name?`<span class="meta">· ${r.organization_name}</span>`:''}
+  <div class="main">
+    <div class="topbar">
+      <h1>Bulk Inquiries</h1>
+      <span id="count-label" style="font-size:.85rem;color:var(--muted)"></span>
+    </div>
+    <div style="padding:1rem 1.6rem 0">
+      <div class="filters" id="filters">
+        <button class="filter-btn active" data-filter="">All</button>
+        <button class="filter-btn" data-filter="new">New</button>
+        <button class="filter-btn" data-filter="contacted">Contacted</button>
+        <button class="filter-btn" data-filter="quoted">Quoted</button>
+        <button class="filter-btn" data-filter="paid">Paid</button>
+        <button class="filter-btn" data-filter="shipped">Shipped</button>
+        <button class="filter-btn" data-filter="closed">Closed</button>
+      </div>
+    </div>
+    <div class="content" id="content"><p style="color:var(--muted);padding:2rem">Loading…</p></div>
+  </div>
+
+  <script>
+    const statusMap = {
+      new:'badge-new', contacted:'badge-contacted', quoted:'badge-quoted',
+      paid:'badge-paid', shipped:'badge-shipped', closed:'badge-closed',
+      not_a_fit:'badge-not_a_fit',
+    };
+    const allStatuses = ['new','contacted','quoted','paid','shipped','closed','not_a_fit'];
+    const qtyMap = {10:'Trial Bundle (10)',25:'Shul Bundle (25)',50:'Sponsor Bundle (50)',100:'Dedication Bundle (100)'};
+    const priceMap = {10:119,25:275,50:499,100:899};
+
+    function fmtDate(d){ return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+    function fmtMoney(cents){ return cents!=null?'$'+(cents/100).toFixed(2):'—'; }
+    function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    let allInquiries = [];
+    let activeFilter = '';
+
+    function render(rows) {
+      const el = document.getElementById('content');
+      document.getElementById('count-label').textContent = rows.length
+        ? `${rows.length} inquiry${rows.length===1?'':'ies'}`
+        : '';
+
+      if (!rows.length) {
+        el.innerHTML = '<p class="empty">No bulk inquiries found.</p>';
+        return;
+      }
+
+      el.innerHTML = rows.map(r => {
+        const qty = r.quantity_requested;
+        const qtyLabel = qty ? (qtyMap[qty] || `${qty} pouches`) : 'Not specified';
+        const estPrice = qty && priceMap[qty] ? `$${priceMap[qty]} + shipping` : null;
+
+        return `
+        <div class="card" id="card-${r.id}">
+          <div class="card-top">
+            <div class="card-identity">
+              <h3>${esc(r.name)}${r.converted_to_order?` <span class="badge badge-converted" style="font-size:.68rem;vertical-align:middle">Converted</span>`:''}
               </h3>
-              <div class="detail-row">
-                <span><strong>Email:</strong> <a href="mailto:${r.email}">${r.email}</a></span>
-                ${r.phone?`<span><strong>Phone:</strong> ${r.phone}</span>`:''}
-                ${r.quantity_requested?`<span><strong>Qty:</strong> ${r.quantity_requested}</span>`:''}
-                <span class="meta">${fmtDate(r.created_at)}</span>
+              ${r.organization_name?`<div class="org">${esc(r.organization_name)}</div>`:''}
+              <div class="meta-row">
+                <span><a href="mailto:${esc(r.email)}">${esc(r.email)}</a></span>
+                ${r.phone?`<span>📞 ${esc(r.phone)}</span>`:''}
+                <span>${fmtDate(r.created_at)}</span>
               </div>
             </div>
-            <div style="display:flex;align-items:center;gap:.5rem">
-              <span class="badge ${statusMap[r.status]||''}">${r.status}</span>
-              <select onchange="updateStatus(${r.id},this.value)">
-                ${['new','contacted','quoted','closed','not_a_fit'].map(s=>`<option value="${s}"${r.status===s?' selected':''}>${s}</option>`).join('')}
-              </select>
+            <div class="card-status">
+              <span class="badge ${statusMap[r.status]||''}" id="badge-${r.id}">${r.status}</span>
             </div>
           </div>
-          ${r.message?`<div class="message">${r.message.replace(/</g,'&lt;')}</div>`:''}
-        </div>`).join('');
+
+          <div class="detail-grid">
+            <div class="detail-item"><span class="k">Quantity: </span><span class="v">${esc(qtyLabel)}</span></div>
+            ${estPrice?`<div class="detail-item"><span class="k">Est. Price: </span><span class="v">${estPrice}</span></div>`:''}
+            ${r.shipping_zip?`<div class="detail-item"><span class="k">Ship ZIP: </span><span class="v">${esc(r.shipping_zip)}</span></div>`:''}
+            <div class="detail-item"><span class="k">Dedication: </span><span class="v">${r.is_dedication?'Yes':'No'}</span></div>
+            ${r.quoted_shipping_cents!=null?`<div class="detail-item"><span class="k">Quoted Shipping: </span><span class="v" style="color:#16a34a;font-weight:700">${fmtMoney(r.quoted_shipping_cents)}</span></div>`:''}
+            ${r.quoted_total_cents!=null?`<div class="detail-item"><span class="k">Quoted Total: </span><span class="v" style="color:#16a34a;font-weight:700">${fmtMoney(r.quoted_total_cents)}</span></div>`:''}
+          </div>
+
+          ${r.is_dedication && r.dedication_text?`<div class="dedication-text">✦ Dedication: ${esc(r.dedication_text)}</div>`:''}
+          ${r.message?`<div class="message-block">${esc(r.message)}</div>`:''}
+
+          <!-- Admin panel -->
+          <div class="admin-panel">
+            <div class="admin-panel-title">Admin Actions</div>
+            <div class="admin-fields">
+              <label>Status
+                <select id="status-${r.id}">
+                  ${allStatuses.map(s=>`<option value="${s}"${r.status===s?' selected':''}>${s}</option>`).join('')}
+                </select>
+              </label>
+              <label>Quoted Shipping
+                <input type="number" id="qship-${r.id}" placeholder="e.g. 2450 = $24.50"
+                  value="${r.quoted_shipping_cents!=null?r.quoted_shipping_cents:''}"
+                  step="1" min="0"/>
+              </label>
+              <label>Quoted Total (incl. shipping)
+                <input type="number" id="qtotal-${r.id}" placeholder="e.g. 29950 = $299.50"
+                  value="${r.quoted_total_cents!=null?r.quoted_total_cents:''}"
+                  step="1" min="0"/>
+              </label>
+              <label class="full">Admin Notes
+                <textarea id="notes-${r.id}" rows="2" placeholder="Internal notes — not sent to customer">${esc(r.admin_notes||'')}</textarea>
+              </label>
+            </div>
+            <div class="admin-actions">
+              <button class="btn btn-gold" onclick="saveInquiry(${r.id})">Save Changes</button>
+              <label style="display:flex;align-items:center;gap:.45rem;font-size:.82rem;font-weight:700;color:var(--muted);cursor:pointer">
+                <input type="checkbox" id="converted-${r.id}" ${r.converted_to_order?'checked':''} style="accent-color:var(--gold)">
+                Converted to order
+              </label>
+              <span class="save-result" id="result-${r.id}"></span>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function applyFilter(f) {
+      activeFilter = f;
+      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.filter===f));
+      render(f ? allInquiries.filter(r=>r.status===f) : allInquiries);
+    }
+
+    fetch('/admin/api/bulk-inquiries').then(r=>r.json()).then(rows=>{
+      allInquiries = rows;
+      render(rows);
+    }).catch(()=>{
+      document.getElementById('content').innerHTML='<p style="color:red;padding:2rem">Error loading inquiries.</p>';
     });
 
-    function updateStatus(id,status){
-      fetch(`/admin/bulk-inquiries/${id}/status`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})})
-        .catch(()=>alert('Save failed'));
+    document.getElementById('filters').addEventListener('click', e=>{
+      if(e.target.matches('.filter-btn')) applyFilter(e.target.dataset.filter);
+    });
+
+    async function saveInquiry(id) {
+      const resultEl = document.getElementById(`result-${id}`);
+      resultEl.style.display = 'none';
+
+      const payload = {
+        status:                   document.getElementById(`status-${id}`).value,
+        admin_notes:              document.getElementById(`notes-${id}`).value,
+        quoted_shipping_cents:    document.getElementById(`qship-${id}`).value || null,
+        quoted_total_cents:       document.getElementById(`qtotal-${id}`).value || null,
+        converted_to_order:       document.getElementById(`converted-${id}`).checked ? 'true' : 'false',
+      };
+
+      try {
+        const r = await fetch(`/admin/bulk-inquiries/${id}/update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await r.json();
+        if (r.ok) {
+          // Update status badge inline
+          const badge = document.getElementById(`badge-${id}`);
+          if (badge) {
+            badge.textContent = payload.status;
+            badge.className = `badge ${statusMap[payload.status]||''}`;
+          }
+          // Update in-memory
+          const idx = allInquiries.findIndex(x=>x.id===id);
+          if (idx>=0) {
+            allInquiries[idx] = { ...allInquiries[idx], ...data.inquiry };
+          }
+          resultEl.textContent = '✓ Saved';
+          resultEl.className = 'save-result ok';
+          resultEl.style.display = 'inline-flex';
+          setTimeout(()=>{ resultEl.style.display='none'; }, 3000);
+        } else {
+          throw new Error(data.error || 'Unknown error');
+        }
+      } catch(err) {
+        resultEl.textContent = 'Error: ' + err.message;
+        resultEl.className = 'save-result err';
+        resultEl.style.display = 'inline-flex';
+      }
     }
   </script>
 </body>

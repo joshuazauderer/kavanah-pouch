@@ -4,6 +4,7 @@ const { body, validationResult } = require('express-validator');
 const db = require('../db');
 const {
   notifyNewBulkInquiry,
+  sendBulkInquiryConfirmation,
   notifyNewSupportMessage,
   notifyNewFeedback,
   notifyNewWaitlistSignup,
@@ -63,21 +64,40 @@ router.post(
   body('name').trim().notEmpty(),
   async (req, res, next) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.redirect('/?submitted=error#shuls');
+    if (!errors.isEmpty()) return res.redirect('/?submitted=error#bulk-inquiry-form');
 
-    const { name, email, organization, quantity, message } = req.body;
+    const {
+      name, email, phone, organization, quantity,
+      shipping_zip, is_dedication, dedication_text, message,
+    } = req.body;
+
+    // quantity may be 'custom' (string) or a number string
     const quantityNum = parseInt(quantity, 10) || null;
+    const isDedication = is_dedication === 'yes';
 
     try {
       const { rows: [inquiry] } = await db.query(
         `INSERT INTO bulk_inquiries
-           (name, email, organization_name, quantity_requested, message)
-         VALUES ($1, $2, $3, $4, $5)
+           (name, email, phone, organization_name, quantity_requested,
+            shipping_zip, is_dedication, dedication_text, message)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING *`,
-        [name, email, organization || null, quantityNum, message || null]
+        [
+          name,
+          email,
+          phone || null,
+          organization || null,
+          quantityNum,
+          shipping_zip || null,
+          isDedication,
+          (isDedication && dedication_text) ? dedication_text.trim() : null,
+          message || null,
+        ]
       );
+      // Owner notification + customer confirmation (both fire-and-forget)
       notifyNewBulkInquiry(inquiry).catch(() => {});
-      res.redirect('/?submitted=bulk#shuls');
+      sendBulkInquiryConfirmation(inquiry).catch(() => {});
+      res.redirect('/?submitted=bulk#bulk-inquiry-form');
     } catch (err) {
       next(err);
     }

@@ -250,6 +250,40 @@ router.get('/admin/api/bulk-inquiries', requireAdmin, async (req, res) => {
   }
 });
 
+// Full update: status + admin notes + quoted amounts + converted flag
+router.post('/admin/bulk-inquiries/:id/update', requireAdmin, async (req, res) => {
+  try {
+    const {
+      status, admin_notes, quoted_shipping_cents, quoted_total_cents, converted_to_order,
+    } = req.body;
+
+    const shippingCents = quoted_shipping_cents !== '' && quoted_shipping_cents != null
+      ? parseInt(quoted_shipping_cents, 10) || null
+      : null;
+    const totalCents = quoted_total_cents !== '' && quoted_total_cents != null
+      ? parseInt(quoted_total_cents, 10) || null
+      : null;
+    const converted = converted_to_order === 'true' || converted_to_order === true;
+
+    const { rows: [inq] } = await db.query(
+      `UPDATE bulk_inquiries
+       SET status                  = COALESCE($1, status),
+           admin_notes             = $2,
+           quoted_shipping_cents   = $3,
+           quoted_total_cents      = $4,
+           converted_to_order      = $5,
+           updated_at              = NOW()
+       WHERE id = $6
+       RETURNING *`,
+      [status || null, admin_notes || null, shippingCents, totalCents, converted, req.params.id]
+    );
+    res.json({ ok: true, inquiry: inq });
+  } catch (err) {
+    console.error('Bulk inquiry update error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/admin/bulk-inquiries/:id/status', requireAdmin, async (req, res) => {
   try {
     await db.query(
