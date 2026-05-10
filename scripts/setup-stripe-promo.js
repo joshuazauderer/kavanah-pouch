@@ -93,7 +93,7 @@ async function findExistingPromoCode(couponId) {
 }
 
 async function main() {
-  const mode = secretKey.startsWith('sk_live_') ? 'LIVE' : 'TEST';
+  const mode = (secretKey.startsWith('sk_live_') || secretKey.startsWith('rk_live_')) ? 'LIVE' : 'TEST';
   console.log(`\nStripe mode: ${mode}`);
   console.log('─'.repeat(40));
 
