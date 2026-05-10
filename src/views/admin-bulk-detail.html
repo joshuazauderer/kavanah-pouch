@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Bulk Inquiry | Kavanah Pouch Admin</title>
+  <style>
+    *{box-sizing:border-box}
+    :root{--navy:#001f42;--gold:#d6a23a;--cream:#f8f1df;--ink:#132133;--muted:#667085;--line:rgba(19,33,51,.12);--sidebar:220px}
+    body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f4f6f9;color:var(--ink);display:flex;min-height:100vh}
+    a{color:inherit;text-decoration:none}
+    .sidebar{width:var(--sidebar);background:var(--navy);color:var(--cream);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+    .sidebar-brand{padding:1.4rem 1.2rem 1rem;font-weight:800;font-size:1rem;letter-spacing:.04em;color:var(--gold);border-bottom:1px solid rgba(248,241,223,.12)}
+    .sidebar-nav a{display:flex;align-items:center;gap:.6rem;padding:.7rem 1.2rem;font-size:.88rem;font-weight:600;color:rgba(248,241,223,.78)}
+    .sidebar-nav a:hover,.sidebar-nav a.active{background:rgba(214,162,58,.14);color:var(--gold)}
+    .sidebar-nav a.active{border-left:3px solid var(--gold)}
+    .sidebar-footer{padding:1rem 1.2rem;border-top:1px solid rgba(248,241,223,.12)}
+    .sidebar-footer form button{background:none;border:none;color:rgba(248,241,223,.5);font:inherit;font-size:.82rem;cursor:pointer;padding:0}
+    .main{flex:1;overflow:auto}
+    .topbar{background:#fff;border-bottom:1px solid var(--line);padding:.9rem 1.6rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    .topbar h1{margin:0;font-size:1.2rem;font-weight:800;flex:1;min-width:0}
+    .back-link{color:var(--gold);font-weight:700;font-size:.88rem;white-space:nowrap}
+    .topbar-actions{display:flex;gap:.5rem;flex-wrap:wrap}
+    .content{padding:1.6rem;display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+    .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,31,66,.05)}
+    .card h2{margin:0 0 1rem;font-size:1rem;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.06em}
+    .field{display:grid;grid-template-columns:160px 1fr;gap:.4rem .8rem;margin-bottom:.5rem;font-size:.88rem}
+    .field .k{color:var(--muted);font-weight:600}
+    .field .v{font-weight:500;word-break:break-all}
+    label{display:grid;gap:.3rem;font-size:.85rem;font-weight:700;color:var(--muted);margin-bottom:.75rem}
+    input,select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:#f9fafb;color:var(--ink);padding:.6rem .8rem;font:inherit;font-size:.88rem;outline:none}
+    input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(214,162,58,.18)}
+    textarea{resize:vertical;min-height:80px}
+    .btn{padding:.55rem 1.1rem;border-radius:999px;font:inherit;font-size:.85rem;font-weight:700;cursor:pointer;border:none;transition:background 150ms;text-decoration:none;display:inline-block}
+    .btn-gold{background:var(--gold);color:var(--navy)}
+    .btn-gold:hover{background:#e0b353}
+    .btn-navy{background:var(--navy);color:var(--cream)}
+    .btn-navy:hover{background:#0a3060}
+    .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
+    .btn-ghost:hover{background:#f3f4f6}
+    .btn-sm{padding:.35rem .75rem;font-size:.8rem}
+    .btn-danger{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}
+    .badge{display:inline-flex;padding:.25rem .6rem;border-radius:999px;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+    .badge-new{background:#dbeafe;color:#1d4ed8}
+    .badge-contacted{background:#fef9c3;color:#854d0e}
+    .badge-quoted{background:#f3e8ff;color:#7c3aed}
+    .badge-invoice_sent{background:#ffedd5;color:#c2410c}
+    .badge-paid{background:#dcfce7;color:#16a34a}
+    .badge-packed{background:#d1fae5;color:#065f46}
+    .badge-shipped{background:#dcfce7;color:#16a34a}
+    .badge-closed{background:#f3f4f6;color:#6b7280}
+    .badge-canceled{background:#f3f4f6;color:#6b7280}
+    .alert{border-radius:10px;padding:.65rem 1rem;font-size:.85rem;font-weight:600;margin-bottom:1rem}
+    .alert-success{background:#dcfce7;border:1px solid #86efac;color:#16a34a}
+    .alert-error{background:#fee2e2;border:1px solid #fca5a5;color:#dc2626}
+    .email-row{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--line);font-size:.85rem}
+    .email-row:last-child{border-bottom:none}
+    .email-row .sent-at{font-size:.78rem;color:var(--muted)}
+    .full-width{grid-column:1/-1}
+    @media(max-width:900px){.content{grid-template-columns:1fr}}
+    /* Ship modal */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;place-items:center}
+    .modal-overlay.open{display:grid}
+    .modal{background:#fff;border-radius:20px;padding:1.8rem;width:min(440px,calc(100vw - 2rem));box-shadow:0 24px 80px rgba(0,0,0,.25);max-height:90vh;overflow-y:auto}
+    .modal h2{margin:0 0 1.2rem;font-size:1.1rem;font-weight:800;color:var(--navy)}
+    .modal label{display:grid;gap:.3rem;font-size:.85rem;font-weight:700;color:var(--muted);margin-bottom:.75rem}
+    .modal input,.modal select{width:100%;border:1px solid var(--line);border-radius:10px;background:#f9fafb;color:var(--ink);padding:.6rem .8rem;font:inherit;outline:none}
+    .modal input:focus,.modal select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(214,162,58,.18)}
+    .modal-actions{display:flex;gap:.6rem;justify-content:flex-end;margin-top:1.2rem}
+    .modal-error{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:.55rem .8rem;font-size:.83rem;color:#dc2626;margin-bottom:.75rem;display:none}
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-brand">⬡ Kavanah Pouch</div>
+    <nav class="sidebar-nav">
+      <a href="/admin">Dashboard</a>
+      <a href="/admin/orders">Orders</a>
+      <a href="/admin/inventory">Inventory</a>
+      <a href="/admin/waitlist">Waitlist</a>
+      <a href="/admin/bulk-inquiries" class="active">Bulk Inquiries</a>
+      <a href="/admin/support">Support</a>
+      <a href="/admin/feedback">Feedback</a>
+      <a href="/admin/analytics">Analytics</a>
+      <a href="/admin/settings">Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <form method="POST" action="/admin/logout"><button type="submit">Sign out</button></form>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <a class="back-link" href="/admin/bulk-inquiries">← Bulk Inquiries</a>
+      <h1 id="page-title">Bulk Inquiry</h1>
+      <div class="topbar-actions">
+        <a id="slip-btn" class="btn btn-ghost btn-sm" href="#" target="_blank" style="display:none">🖨 Packing Slip</a>
+      </div>
+    </div>
+
+    <div class="content" id="content">
+      <div class="card full-width"><p style="color:var(--muted)">Loading…</p></div>
+    </div>
+  </div>
+
+  <!-- Ship Modal -->
+  <div class="modal-overlay" id="ship-modal" onclick="if(event.target===this)closeShipModal()">
+    <div class="modal">
+      <h2>Mark as Shipped</h2>
+      <div class="modal-error" id="modal-error"></div>
+      <div style="display:grid;gap:.75rem">
+        <label>Tracking Number *<input id="ship-tracking" placeholder="e.g. 9400111899223411963592"/></label>
+        <label>Carrier *
+          <select id="ship-carrier">
+            <option value="USPS" selected>USPS</option>
+            <option value="UPS">UPS</option>
+            <option value="FedEx">FedEx</option>
+            <option value="DHL">DHL</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+        <label>Ship Date <input id="ship-date" type="date"/></label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeShipModal()">Cancel</button>
+        <button type="button" class="btn btn-navy" id="ship-submit-btn" onclick="submitShip()">Mark as Shipped</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const id = location.pathname.split('/').pop();
+    const STATUSES = ['new','contacted','quoted','invoice_sent','paid','packed','shipped','closed','canceled'];
+    const badgeMap = {
+      new:'badge-new', contacted:'badge-contacted', quoted:'badge-quoted',
+      invoice_sent:'badge-invoice_sent', paid:'badge-paid', packed:'badge-packed',
+      shipped:'badge-shipped', closed:'badge-closed', canceled:'badge-canceled',
+    };
+
+    function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function fmt(c){ return c!=null?'$'+(c/100).toFixed(2):'—'; }
+    function fmtDate(d){ return d?new Date(d).toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'}):'—'; }
+    function fmtDateOnly(d){ return d?new Date(d).toLocaleDateString('en-US',{dateStyle:'medium'}):'—'; }
+    function badge(val){ return `<span class="badge ${badgeMap[val]||''}">${esc(val||'')}</span>`; }
+    function dollars(c){ return c!=null?(c/100).toFixed(2):''; }
+
+    function showAlert(id, type, msg) {
+      const el = document.getElementById(id);
+      el.className = `alert alert-${type}`;
+      el.textContent = msg;
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 4000);
+    }
+
+    let inq = null;
+
+    fetch(`/admin/api/bulk-inquiries/${id}`).then(r=>r.json()).then(data => {
+      inq = data;
+      document.getElementById('page-title').textContent =
+        (inq.organization_name || inq.name || 'Bulk Inquiry') + ` #${inq.id}`;
+      // Show packing slip button if there's a shipping address
+      if (inq.shipping_address_line1) {
+        const slipBtn = document.getElementById('slip-btn');
+        slipBtn.href = `/admin/bulk-inquiries/${inq.id}/packing-slip`;
+        slipBtn.style.display = '';
+      }
+      render(inq);
+    }).catch(() => {
+      document.getElementById('content').innerHTML =
+        '<div class="card full-width"><p style="color:red">Error loading inquiry.</p></div>';
+    });
+
+    function render(inq) {
+      document.getElementById('content').innerHTML = buildHTML(inq);
+    }
+
+    function buildHTML(i) {
+      const orgLine = i.organization_name
+        ? `<div class="field"><span class="k">Organization</span><span class="v">${esc(i.organization_name)}</span></div>`
+        : '';
+      const orgType = i.organization_type
+        ? `<div class="field"><span class="k">Org Type</span><span class="v">${esc(i.organization_type)}</span></div>`
+        : '';
+      const dedicationBlock = i.is_dedication
+        ? `<div class="field"><span class="k">Dedication</span><span class="v" style="color:#7c3aed;font-weight:600">Yes</span></div>
+           ${i.dedication_text ? `<div class="field"><span class="k">Text</span><span class="v" style="font-style:italic">${esc(i.dedication_text)}</span></div>` : ''}`
+        : '';
+
+      const addrFilled = i.shipping_address_line1;
+      const shippingSection = `
+        <div class="field"><span class="k">Ship-to Name</span><span class="v">${esc(i.shipping_name||'—')}</span></div>
+        <div class="field"><span class="k">Address</span><span class="v">${i.shipping_address_line1 ? esc(i.shipping_address_line1)+'<br>'+(i.shipping_address_line2?esc(i.shipping_address_line2)+'<br>':'')+[esc(i.shipping_city),esc(i.shipping_state),esc(i.shipping_postal_code)].filter(Boolean).join(', ')+(i.shipping_country&&i.shipping_country!=='US'?'<br>'+esc(i.shipping_country):'') : '—'}</span></div>`;
+
+      const trackingSection = i.tracking_number
+        ? `<div class="field"><span class="k">Tracking #</span><span class="v">${i.tracking_url?`<a href="${esc(i.tracking_url)}" target="_blank" style="color:var(--gold)">${esc(i.tracking_number)}</a>`:esc(i.tracking_number)}</span></div>
+           <div class="field"><span class="k">Carrier</span><span class="v">${esc(i.tracking_carrier||'—')}</span></div>
+           <div class="field"><span class="k">Shipped</span><span class="v">${fmtDateOnly(i.shipped_at)}</span></div>`
+        : '';
+
+      const invoiceSection = i.stripe_invoice_id
+        ? `<div class="field"><span class="k">Invoice #</span><span class="v">${esc(i.stripe_invoice_number||i.stripe_invoice_id)}</span></div>
+           ${i.stripe_invoice_url ? `<div class="field"><span class="k">Invoice Link</span><span class="v"><a href="${esc(i.stripe_invoice_url)}" target="_blank" style="color:var(--gold)">View Invoice ↗</a></span></div>` : ''}
+           <div class="field"><span class="k">Invoice Sent</span><span class="v">${fmtDateOnly(i.invoice_sent_at)}</span></div>
+           <div class="field"><span class="k">Paid At</span><span class="v">${i.paid_at?fmtDateOnly(i.paid_at):'<span style="color:var(--muted)">Unpaid</span>'}</span></div>`
+        : '';
+
+      const canShip = ['paid','packed'].includes(i.status);
+      const canInvoice = i.quoted_total_cents && ['quoted','invoice_sent','contacted'].includes(i.status);
+
+      return `
+        <!-- LEFT COLUMN -->
+        <div>
+          <div class="card" style="margin-bottom:1.2rem">
+            <h2>Inquiry</h2>
+            <div class="field"><span class="k">Status</span><span class="v">${badge(i.status)}</span></div>
+            <div class="field"><span class="k">Submitted</span><span class="v">${fmtDate(i.created_at)}</span></div>
+            <div class="field"><span class="k">Name</span><span class="v">${esc(i.name)}</span></div>
+            <div class="field"><span class="k">Email</span><span class="v"><a href="mailto:${esc(i.email)}" style="color:var(--gold)">${esc(i.email)}</a></span></div>
+            ${i.phone ? `<div class="field"><span class="k">Phone</span><span class="v">${esc(i.phone)}</span></div>` : ''}
+            ${orgLine}${orgType}
+            <div class="field"><span class="k">Qty Requested</span><span class="v">${i.quantity_requested||'—'}</span></div>
+            ${i.shipping_zip ? `<div class="field"><span class="k">Ship ZIP</span><span class="v">${esc(i.shipping_zip)}</span></div>` : ''}
+            ${dedicationBlock}
+            ${i.message ? `<hr style="border:none;border-top:1px solid var(--line);margin:.8rem 0"><div style="font-size:.85rem;color:var(--muted);line-height:1.6;white-space:pre-wrap">${esc(i.message)}</div>` : ''}
+          </div>
+
+          <div class="card" style="margin-bottom:1.2rem">
+            <h2>Shipping Address</h2>
+            ${shippingSection}
+          </div>
+
+          ${trackingSection ? `<div class="card" style="margin-bottom:1.2rem"><h2>Tracking</h2>${trackingSection}</div>` : ''}
+          ${invoiceSection ? `<div class="card"><h2>Invoice</h2>${invoiceSection}</div>` : ''}
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div>
+          <div class="card" style="margin-bottom:1.2rem">
+            <h2>Edit</h2>
+            <div id="edit-alert" style="display:none" class="alert"></div>
+            <label>Status
+              <select id="edit-status">
+                ${STATUSES.map(s=>`<option value="${s}" ${i.status===s?'selected':''}>${s}</option>`).join('')}
+              </select>
+            </label>
+            <label>Confirmed Quantity
+              <input id="edit-qty" type="number" min="1" value="${i.quantity_pouches||i.quantity_requested||''}" placeholder="Number of pouches"/>
+            </label>
+            <label>Bundle Price (cents)
+              <input id="edit-bundle" type="number" min="0" value="${i.quoted_bundle_cents||''}" placeholder="e.g. 49900 for $499.00"/>
+            </label>
+            <label>Shipping (cents)
+              <input id="edit-shipping" type="number" min="0" value="${i.quoted_shipping_cents||''}" placeholder="e.g. 1500 for $15.00"/>
+            </label>
+            <label>Total (cents)
+              <input id="edit-total" type="number" min="0" value="${i.quoted_total_cents||''}" placeholder="e.g. 51400"/>
+            </label>
+            <hr style="border:none;border-top:1px solid var(--line);margin:.8rem 0 1rem">
+            <label>Ship-to Name<input id="edit-ship-name" value="${esc(i.shipping_name||'')}"/></label>
+            <label>Address Line 1<input id="edit-ship-addr1" value="${esc(i.shipping_address_line1||'')}"/></label>
+            <label>Address Line 2<input id="edit-ship-addr2" value="${esc(i.shipping_address_line2||'')}"/></label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+              <label>City<input id="edit-ship-city" value="${esc(i.shipping_city||'')}"/></label>
+              <label>State<input id="edit-ship-state" value="${esc(i.shipping_state||'')}"/></label>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+              <label>ZIP<input id="edit-ship-zip" value="${esc(i.shipping_postal_code||'')}"/></label>
+              <label>Country<input id="edit-ship-country" value="${esc(i.shipping_country||'US')}"/></label>
+            </div>
+            <label>Admin Notes<textarea id="edit-notes">${esc(i.admin_notes||'')}</textarea></label>
+            <button class="btn btn-navy" onclick="saveEdit()">Save Changes</button>
+          </div>
+
+          <div class="card" style="margin-bottom:1.2rem">
+            <h2>Actions</h2>
+            <div id="action-alert" style="display:none" class="alert"></div>
+            <div style="display:flex;flex-wrap:wrap;gap:.5rem">
+              <button class="btn btn-ghost btn-sm" onclick="sendEmail('quote')">📧 Send Quote Email</button>
+              ${canInvoice
+                ? `<button class="btn btn-gold btn-sm" onclick="sendInvoice()">🧾 Create &amp; Send Invoice</button>`
+                : (i.stripe_invoice_url ? `<button class="btn btn-ghost btn-sm" onclick="sendEmail('invoice')">📧 Resend Invoice Email</button>` : '')}
+              ${i.paid_at ? `<button class="btn btn-ghost btn-sm" onclick="sendEmail('payment')">📧 Resend Payment Email</button>` : ''}
+              ${canShip ? `<button class="btn btn-navy btn-sm" onclick="openShipModal()">✈ Mark as Shipped</button>` : ''}
+              ${i.tracking_number ? `<button class="btn btn-ghost btn-sm" onclick="sendEmail('shipping')">📧 Resend Shipping Email</button>` : ''}
+              ${i.shipping_address_line1 ? `<a class="btn btn-ghost btn-sm" href="/admin/bulk-inquiries/${i.id}/packing-slip" target="_blank">🖨 Packing Slip</a>` : ''}
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Email Log</h2>
+            <div class="email-row">
+              <span>Inquiry Confirmation</span>
+              <span class="sent-at">Auto-sent on submit</span>
+            </div>
+            <div class="email-row">
+              <span>Quote</span>
+              <span class="sent-at">${i.email_quote_sent_at ? '✓ ' + fmtDateOnly(i.email_quote_sent_at) : '—'}</span>
+            </div>
+            <div class="email-row">
+              <span>Invoice</span>
+              <span class="sent-at">${i.email_invoice_sent_at ? '✓ ' + fmtDateOnly(i.email_invoice_sent_at) : '—'}</span>
+            </div>
+            <div class="email-row">
+              <span>Payment Received</span>
+              <span class="sent-at">${i.email_payment_sent_at ? '✓ ' + fmtDateOnly(i.email_payment_sent_at) : '—'}</span>
+            </div>
+            <div class="email-row">
+              <span>Shipping Confirmation</span>
+              <span class="sent-at">${i.email_shipping_sent_at ? '✓ ' + fmtDateOnly(i.email_shipping_sent_at) : '—'}</span>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    async function saveEdit() {
+      const body = {
+        status:                  document.getElementById('edit-status').value,
+        admin_notes:             document.getElementById('edit-notes').value,
+        quantity_pouches:        document.getElementById('edit-qty').value,
+        quoted_bundle_cents:     document.getElementById('edit-bundle').value,
+        quoted_shipping_cents:   document.getElementById('edit-shipping').value,
+        quoted_total_cents:      document.getElementById('edit-total').value,
+        shipping_name:           document.getElementById('edit-ship-name').value,
+        shipping_address_line1:  document.getElementById('edit-ship-addr1').value,
+        shipping_address_line2:  document.getElementById('edit-ship-addr2').value,
+        shipping_city:           document.getElementById('edit-ship-city').value,
+        shipping_state:          document.getElementById('edit-ship-state').value,
+        shipping_postal_code:    document.getElementById('edit-ship-zip').value,
+        shipping_country:        document.getElementById('edit-ship-country').value,
+      };
+      try {
+        const r = await fetch(`/admin/bulk-inquiries/${id}/update-detail`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await r.json();
+        if (r.ok) {
+          inq = data.inquiry;
+          render(inq);
+          showAlert('edit-alert', 'success', '✓ Saved successfully.');
+          // Update packing slip button
+          if (inq.shipping_address_line1) {
+            document.getElementById('slip-btn').style.display = '';
+          }
+        } else {
+          showAlert('edit-alert', 'error', data.error || 'Save failed.');
+        }
+      } catch(e) {
+        showAlert('edit-alert', 'error', 'Network error — please try again.');
+      }
+    }
+
+    async function sendEmail(type) {
+      try {
+        const r = await fetch(`/admin/bulk-inquiries/${id}/send-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type }),
+        });
+        const data = await r.json();
+        if (r.ok) {
+          // Refresh to update email log
+          const res = await fetch(`/admin/api/bulk-inquiries/${id}`);
+          inq = await res.json();
+          render(inq);
+          showAlert('action-alert', 'success', '✓ Email sent.');
+        } else {
+          showAlert('action-alert', 'error', data.error || 'Failed to send email.');
+        }
+      } catch(e) {
+        showAlert('action-alert', 'error', 'Network error — please try again.');
+      }
+    }
+
+    async function sendInvoice() {
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = 'Creating…';
+      try {
+        const r = await fetch(`/admin/bulk-inquiries/${id}/send-invoice`, { method: 'POST' });
+        const data = await r.json();
+        if (r.ok) {
+          const res = await fetch(`/admin/api/bulk-inquiries/${id}`);
+          inq = await res.json();
+          render(inq);
+          showAlert('action-alert', 'success', '✓ Invoice created and sent. ' + (data.resent ? '(Resent existing invoice)' : ''));
+        } else {
+          btn.disabled = false;
+          btn.textContent = '🧾 Create & Send Invoice';
+          showAlert('action-alert', 'error', data.error || 'Failed to create invoice.');
+        }
+      } catch(e) {
+        btn.disabled = false;
+        btn.textContent = '🧾 Create & Send Invoice';
+        showAlert('action-alert', 'error', 'Network error — please try again.');
+      }
+    }
+
+    function openShipModal() {
+      document.getElementById('ship-tracking').value = '';
+      document.getElementById('ship-carrier').value = 'USPS';
+      document.getElementById('ship-date').value = new Date().toISOString().slice(0,10);
+      document.getElementById('modal-error').style.display = 'none';
+      document.getElementById('ship-submit-btn').disabled = false;
+      document.getElementById('ship-submit-btn').textContent = 'Mark as Shipped';
+      document.getElementById('ship-modal').classList.add('open');
+      document.getElementById('ship-tracking').focus();
+    }
+
+    function closeShipModal() {
+      document.getElementById('ship-modal').classList.remove('open');
+    }
+
+    async function submitShip() {
+      const btn = document.getElementById('ship-submit-btn');
+      const errEl = document.getElementById('modal-error');
+      const tracking = document.getElementById('ship-tracking').value.trim();
+      const carrier  = document.getElementById('ship-carrier').value;
+      const shipDate = document.getElementById('ship-date').value;
+      if (!tracking) { errEl.textContent = 'Tracking number required.'; errEl.style.display = 'block'; return; }
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+      errEl.style.display = 'none';
+      try {
+        const r = await fetch(`/admin/bulk-inquiries/${id}/mark-shipped`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tracking_number: tracking, tracking_carrier: carrier, shipped_at: shipDate }),
+        });
+        const data = await r.json();
+        if (r.ok) {
+          inq = data.inquiry;
+          closeShipModal();
+          render(inq);
+          showAlert('action-alert', 'success', '✓ Marked as shipped. Shipping confirmation email sent.');
+        } else {
+          errEl.textContent = data.error || 'Error marking shipped.';
+          errEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Mark as Shipped';
+        }
+      } catch(e) {
+        errEl.textContent = 'Network error.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Mark as Shipped';
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeShipModal();
+    });
+  </script>
+</body>
+</html>

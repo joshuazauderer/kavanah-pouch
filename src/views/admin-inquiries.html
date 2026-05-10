@@ -109,7 +109,9 @@
         <button class="filter-btn" data-filter="new">New</button>
         <button class="filter-btn" data-filter="contacted">Contacted</button>
         <button class="filter-btn" data-filter="quoted">Quoted</button>
+        <button class="filter-btn" data-filter="invoice_sent">Invoice Sent</button>
         <button class="filter-btn" data-filter="paid">Paid</button>
+        <button class="filter-btn" data-filter="packed">Packed</button>
         <button class="filter-btn" data-filter="shipped">Shipped</button>
         <button class="filter-btn" data-filter="closed">Closed</button>
       </div>
@@ -120,10 +122,11 @@
   <script>
     const statusMap = {
       new:'badge-new', contacted:'badge-contacted', quoted:'badge-quoted',
-      paid:'badge-paid', shipped:'badge-shipped', closed:'badge-closed',
+      invoice_sent:'badge-quoted', paid:'badge-paid', packed:'badge-paid',
+      shipped:'badge-shipped', closed:'badge-closed', canceled:'badge-not_a_fit',
       not_a_fit:'badge-not_a_fit',
     };
-    const allStatuses = ['new','contacted','quoted','paid','shipped','closed','not_a_fit'];
+    const allStatuses = ['new','contacted','quoted','invoice_sent','paid','packed','shipped','closed','canceled'];
     const qtyMap = {10:'Trial Bundle (10)',25:'Shul Bundle (25)',50:'Sponsor Bundle (50)',100:'Dedication Bundle (100)'};
     const priceMap = {10:119,25:275,50:499,100:899};
 
@@ -205,6 +208,7 @@
             </div>
             <div class="admin-actions">
               <button class="btn btn-gold" onclick="saveInquiry(${r.id})">Save Changes</button>
+              <a class="btn btn-ghost" href="/admin/bulk-inquiries/${r.id}" style="text-decoration:none">View Detail →</a>
               <label style="display:flex;align-items:center;gap:.45rem;font-size:.82rem;font-weight:700;color:var(--muted);cursor:pointer">
                 <input type="checkbox" id="converted-${r.id}" ${r.converted_to_order?'checked':''} style="accent-color:var(--gold)">
                 Converted to order

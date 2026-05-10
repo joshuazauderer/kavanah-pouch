@@ -12,13 +12,18 @@ const {
 } = require('../services/orderService');
 const { getInventory, setInventory } = require('../services/inventoryService');
 const { exportPirateShipCsv } = require('../services/csvService');
-const { sendOrderConfirmationEmail, sendPasswordResetEmail } = require('../services/emailService');
+const {
+  sendOrderConfirmationEmail, sendPasswordResetEmail,
+  sendBulkQuoteEmail, sendBulkInvoiceEmail,
+  sendBulkPaymentReceivedEmail, sendBulkShippingConfirmationEmail,
+} = require('../services/emailService');
 const {
   getSummary, getDailyStats, getTopReferrers, getTopPages,
   getDeviceBreakdown, getFunnel, getRecentEvents, getUtmStats, getCouponStats,
 } = require('../services/analyticsService');
 const { getSetting, getAllSettings, setSettings } = require('../services/settingsService');
 const { renderPackingSlipDocument } = require('../services/packingSlipService');
+const { stripe } = require('../services/stripeService');
 
 const router = express.Router();
 
@@ -299,6 +304,362 @@ router.post('/admin/bulk-inquiries/:id/status', requireAdmin, async (req, res) =
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Bulk Inquiry detail (must be before /:id catch-all) ──────────────────────
+router.get('/admin/bulk-inquiries/:id', requireAdmin, async (req, res) => {
+  // Serve the detail page HTML (data loaded via /admin/api/bulk-inquiries/:id)
+  const idNum = parseInt(req.params.id, 10);
+  if (isNaN(idNum)) return res.redirect('/admin/bulk-inquiries');
+  res.sendFile(path.join(__dirname, '../../src/views/admin-bulk-detail.html'));
+});
+
+router.get('/admin/api/bulk-inquiries/:id', requireAdmin, async (req, res) => {
+  try {
+    const { rows: [inq] } = await db.query(
+      'SELECT * FROM bulk_inquiries WHERE id = $1',
+      [req.params.id]
+    );
+    if (!inq) return res.status(404).json({ error: 'Not found' });
+    res.json(inq);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Full update for bulk inquiry
+router.post('/admin/bulk-inquiries/:id/update-detail', requireAdmin, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const {
+      status, admin_notes,
+      quantity_pouches,
+      quoted_bundle_cents, quoted_shipping_cents, quoted_total_cents,
+      shipping_name, shipping_address_line1, shipping_address_line2,
+      shipping_city, shipping_state, shipping_postal_code, shipping_country,
+    } = req.body;
+
+    const toInt = v => (v !== '' && v != null) ? parseInt(v, 10) || null : null;
+    const toStr = v => (v != null && v !== '') ? String(v) : null;
+
+    const { rows: [inq] } = await db.query(
+      `UPDATE bulk_inquiries
+       SET status                  = COALESCE($1, status),
+           admin_notes             = $2,
+           quantity_pouches        = $3,
+           quoted_bundle_cents     = $4,
+           quoted_shipping_cents   = $5,
+           quoted_total_cents      = $6,
+           shipping_name           = $7,
+           shipping_address_line1  = $8,
+           shipping_address_line2  = $9,
+           shipping_city           = $10,
+           shipping_state          = $11,
+           shipping_postal_code    = $12,
+           shipping_country        = $13,
+           updated_at              = NOW()
+       WHERE id = $14
+       RETURNING *`,
+      [
+        toStr(status),
+        toStr(admin_notes),
+        toInt(quantity_pouches),
+        toInt(quoted_bundle_cents),
+        toInt(quoted_shipping_cents),
+        toInt(quoted_total_cents),
+        toStr(shipping_name),
+        toStr(shipping_address_line1),
+        toStr(shipping_address_line2),
+        toStr(shipping_city),
+        toStr(shipping_state),
+        toStr(shipping_postal_code),
+        toStr(shipping_country) || 'US',
+        id,
+      ]
+    );
+    if (!inq) return res.status(404).json({ error: 'Not found' });
+    res.json({ ok: true, inquiry: inq });
+  } catch (err) {
+    console.error('Bulk detail update error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create / resend Stripe Invoice
+router.post('/admin/bulk-inquiries/:id/send-invoice', requireAdmin, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { rows: [inq] } = await db.query('SELECT * FROM bulk_inquiries WHERE id = $1', [id]);
+    if (!inq) return res.status(404).json({ error: 'Inquiry not found' });
+    if (!inq.quoted_total_cents) return res.status(400).json({ error: 'Set a quoted total before creating invoice' });
+
+    // Create or reuse Stripe Customer
+    let customerId = inq.stripe_customer_id;
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: inq.email,
+        name:  inq.name || undefined,
+        metadata: { bulk_inquiry_id: String(id) },
+      });
+      customerId = customer.id;
+    }
+
+    // If existing invoice is still open, fetch its hosted URL instead of creating a new one
+    if (inq.stripe_invoice_id) {
+      try {
+        const existing = await stripe.invoices.retrieve(inq.stripe_invoice_id);
+        if (existing.status === 'open') {
+          // Just resend the email with the existing invoice
+          const updatedInq = { ...inq, stripe_customer_id: customerId };
+          await sendBulkInvoiceEmail(updatedInq);
+          await db.query(
+            `UPDATE bulk_inquiries SET email_invoice_sent_at = NOW(), updated_at = NOW() WHERE id = $1`,
+            [id]
+          );
+          return res.json({ ok: true, invoiceUrl: existing.hosted_invoice_url, resent: true });
+        }
+      } catch (_) { /* invoice may have been voided or deleted */ }
+    }
+
+    // Build line items
+    const lineItems = [];
+    const qty = inq.quantity_pouches || inq.quantity_requested || 1;
+
+    if (inq.quoted_bundle_cents) {
+      lineItems.push({
+        price_data: {
+          currency: 'usd',
+          product_data: { name: `Kavanah Pouch × ${qty}` },
+          unit_amount: inq.quoted_bundle_cents,
+        },
+        quantity: 1,
+      });
+    } else {
+      // Fallback: use total as single line item
+      lineItems.push({
+        price_data: {
+          currency: 'usd',
+          product_data: { name: `Kavanah Pouch Bulk Order × ${qty}` },
+          unit_amount: inq.quoted_total_cents,
+        },
+        quantity: 1,
+      });
+    }
+
+    if (inq.quoted_shipping_cents && inq.quoted_shipping_cents > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'usd',
+          product_data: { name: 'Shipping' },
+          unit_amount: inq.quoted_shipping_cents,
+        },
+        quantity: 1,
+      });
+    }
+
+    if (inq.is_dedication) {
+      const orgName = inq.organization_name ? ` (${inq.organization_name})` : '';
+      lineItems.push({
+        price_data: {
+          currency: 'usd',
+          product_data: { name: `Dedication Inscription${orgName}` },
+          unit_amount: 0,
+        },
+        quantity: 1,
+      });
+    }
+
+    // Create the invoice
+    const invoice = await stripe.invoices.create({
+      customer: customerId,
+      collection_method: 'send_invoice',
+      days_until_due: 14,
+      metadata: { bulk_inquiry_id: String(id) },
+      auto_advance: false,
+    });
+
+    // Add line items
+    for (const item of lineItems) {
+      await stripe.invoiceItems.create({
+        customer: customerId,
+        invoice: invoice.id,
+        ...item,
+      });
+    }
+
+    // Finalize and get hosted URL
+    const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
+
+    // Send the invoice (Stripe sends email; we also send our branded email)
+    await stripe.invoices.sendInvoice(finalized.id);
+
+    // Save to DB
+    await db.query(
+      `UPDATE bulk_inquiries
+       SET stripe_customer_id     = $1,
+           stripe_invoice_id      = $2,
+           stripe_invoice_number  = $3,
+           stripe_invoice_url     = $4,
+           stripe_invoice_pdf     = $5,
+           invoice_sent_at        = NOW(),
+           email_invoice_sent_at  = NOW(),
+           status                 = CASE WHEN status NOT IN ('paid','shipped','closed','canceled') THEN 'invoice_sent' ELSE status END,
+           updated_at             = NOW()
+       WHERE id = $6`,
+      [
+        customerId,
+        finalized.id,
+        finalized.number,
+        finalized.hosted_invoice_url,
+        finalized.invoice_pdf,
+        id,
+      ]
+    );
+
+    // Send branded email
+    const updatedInq = {
+      ...inq,
+      stripe_customer_id: customerId,
+      stripe_invoice_id: finalized.id,
+      stripe_invoice_number: finalized.number,
+      stripe_invoice_url: finalized.hosted_invoice_url,
+      quoted_total_cents: inq.quoted_total_cents,
+    };
+    sendBulkInvoiceEmail(updatedInq).catch(err =>
+      console.error('Bulk invoice email error:', err.message)
+    );
+
+    res.json({ ok: true, invoiceUrl: finalized.hosted_invoice_url });
+  } catch (err) {
+    console.error('Send invoice error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Send email templates
+router.post('/admin/bulk-inquiries/:id/send-email', requireAdmin, async (req, res) => {
+  try {
+    const { type } = req.body;
+    if (!type) return res.status(400).json({ error: 'Missing email type' });
+    const { rows: [inq] } = await db.query('SELECT * FROM bulk_inquiries WHERE id = $1', [req.params.id]);
+    if (!inq) return res.status(404).json({ error: 'Not found' });
+
+    const updateField = {
+      quote:    'email_quote_sent_at',
+      invoice:  'email_invoice_sent_at',
+      payment:  'email_payment_sent_at',
+      shipping: 'email_shipping_sent_at',
+    }[type];
+
+    switch (type) {
+      case 'quote':    await sendBulkQuoteEmail(inq); break;
+      case 'invoice':  await sendBulkInvoiceEmail(inq); break;
+      case 'payment':  await sendBulkPaymentReceivedEmail(inq); break;
+      case 'shipping': await sendBulkShippingConfirmationEmail(inq); break;
+      default: return res.status(400).json({ error: 'Unknown email type' });
+    }
+
+    if (updateField) {
+      await db.query(
+        `UPDATE bulk_inquiries SET ${updateField} = NOW(), updated_at = NOW() WHERE id = $1`,
+        [req.params.id]
+      );
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Send bulk email error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Mark bulk order shipped
+router.post('/admin/bulk-inquiries/:id/mark-shipped', requireAdmin, async (req, res) => {
+  try {
+    const {
+      tracking_number, tracking_carrier, shipped_at,
+    } = req.body;
+    if (!tracking_number) return res.status(400).json({ error: 'Tracking number required' });
+    if (!tracking_carrier) return res.status(400).json({ error: 'Carrier required' });
+
+    const trackingUrl = tracking_carrier === 'USPS'
+      ? `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(tracking_number)}`
+      : null;
+
+    const { rows: [inq] } = await db.query(
+      `UPDATE bulk_inquiries
+       SET tracking_number        = $1,
+           tracking_carrier       = $2,
+           tracking_url           = $3,
+           shipped_at             = $4,
+           status                 = 'shipped',
+           updated_at             = NOW()
+       WHERE id = $5
+       RETURNING *`,
+      [
+        tracking_number,
+        tracking_carrier,
+        trackingUrl,
+        shipped_at ? new Date(shipped_at) : new Date(),
+        req.params.id,
+      ]
+    );
+    if (!inq) return res.status(404).json({ error: 'Not found' });
+
+    // Send shipping confirmation email
+    sendBulkShippingConfirmationEmail(inq).catch(err =>
+      console.error('Bulk shipping email error:', err.message)
+    );
+    await db.query(
+      `UPDATE bulk_inquiries SET email_shipping_sent_at = NOW() WHERE id = $1`,
+      [req.params.id]
+    );
+
+    res.json({ ok: true, inquiry: inq });
+  } catch (err) {
+    console.error('Mark bulk shipped error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Bulk inquiry packing slip
+router.get('/admin/bulk-inquiries/:id/packing-slip', requireAdmin, async (req, res) => {
+  try {
+    const { rows: [inq] } = await db.query('SELECT * FROM bulk_inquiries WHERE id = $1', [req.params.id]);
+    if (!inq) return res.status(404).send('Inquiry not found');
+    const includePrices = (await getSetting('packing_slip_include_prices', 'true')) === 'true';
+    const qty = inq.quantity_pouches || inq.quantity_requested || 1;
+
+    // Build a pseudo-order object compatible with the slip renderer
+    const pseudoOrder = {
+      order_number: `BLK-${inq.id}`,
+      created_at: inq.created_at,
+      customer_name: inq.name,
+      shipping_name: inq.shipping_name || inq.name,
+      shipping_address_line1: inq.shipping_address_line1,
+      shipping_address_line2: inq.shipping_address_line2,
+      shipping_city: inq.shipping_city,
+      shipping_state: inq.shipping_state,
+      shipping_postal_code: inq.shipping_postal_code,
+      shipping_country: inq.shipping_country || 'US',
+      subtotal_cents: inq.quoted_bundle_cents || inq.quoted_total_cents,
+      shipping_cents: inq.quoted_shipping_cents || 0,
+      tax_cents: 0,
+      discount_amount_cents: 0,
+      total_cents: inq.quoted_total_cents,
+      items: [{
+        name: `Kavanah Pouch${inq.organization_name ? ` — ${inq.organization_name}` : ''}`,
+        quantity_pouches: qty,
+        total_amount_cents: inq.quoted_bundle_cents || inq.quoted_total_cents,
+      }],
+    };
+
+    const html = renderPackingSlipDocument([pseudoOrder], includePrices);
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send('Error generating packing slip: ' + err.message);
   }
 });
 

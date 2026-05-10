@@ -1,7 +1,9 @@
 const express = require('express');
 const { constructWebhookEvent, stripe } = require('../services/stripeService');
 const { createOrderFromStripe } = require('../services/orderService');
-const { notifyNewOrder, sendOrderConfirmationEmail } = require('../services/emailService');
+const {
+  notifyNewOrder, sendOrderConfirmationEmail, sendBulkPaymentReceivedEmail,
+} = require('../services/emailService');
 const { trackEvent, markSessionConverted } = require('../services/analyticsService');
 
 const router = express.Router();
@@ -78,6 +80,29 @@ router.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), as
             `UPDATE orders SET payment_status = 'refunded', updated_at = NOW()
              WHERE stripe_payment_intent_id = $1`,
             [charge.payment_intent]
+          );
+        }
+        break;
+      }
+
+      // ── Stripe Invoice paid (bulk orders) ──────────────────────────────────
+      case 'invoice.paid': {
+        const invoice = event.data.object;
+        if (!invoice.id) break;
+        const db = require('../db');
+        const { rows: [inq] } = await db.query(
+          `UPDATE bulk_inquiries
+           SET status     = CASE WHEN status NOT IN ('shipped','closed','canceled') THEN 'paid' ELSE status END,
+               paid_at    = COALESCE(paid_at, NOW()),
+               updated_at = NOW()
+           WHERE stripe_invoice_id = $1
+           RETURNING *`,
+          [invoice.id]
+        );
+        if (inq) {
+          console.log(`Bulk inquiry #${inq.id} marked paid via invoice ${invoice.id}`);
+          sendBulkPaymentReceivedEmail(inq).catch(err =>
+            console.error('Bulk payment email failed:', err.message)
           );
         }
         break;

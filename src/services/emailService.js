@@ -561,12 +561,257 @@ async function sendPasswordResetEmail(toEmail, resetUrl) {
   }
 }
 
+// ── Bulk email helper: shared header/footer wrapper ──────────────────────────
+function buildBulkEmailHtml({ firstName, subject, bodyHtml, supportEmail }) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>${escHtml(subject)}</title>
+</head>
+<body style="margin:0;padding:0;background:#e5dfd3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#e5dfd3;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%;max-width:580px;">
+          <tr>
+            <td style="background:#001f42;border-radius:14px 14px 0 0;padding:28px 40px;text-align:center;">
+              <div style="font-size:20px;font-weight:800;color:#d6a23a;letter-spacing:.08em;text-transform:uppercase;">Kavanah Pouch</div>
+              <div style="font-size:11px;color:rgba(248,241,223,.6);margin-top:6px;letter-spacing:.1em;text-transform:uppercase;">Daven without distractions</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#f8f1df;padding:36px 40px;">
+              <p style="margin:0 0 6px;font-size:17px;font-weight:700;color:#132133;">Hi ${escHtml(firstName)},</p>
+              ${bodyHtml}
+              <p style="margin:24px 0 2px;font-size:14px;color:#132133;font-weight:600;">Thank you for supporting Kavanah Pouch.</p>
+              <p style="margin:0;font-size:13px;color:#667085;font-style:italic;">Daven without distractions,<br>Kavanah Pouch</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#001f42;border-radius:0 0 14px 14px;padding:22px 40px;text-align:center;">
+              <p style="margin:0 0 6px;font-size:12px;color:rgba(248,241,223,.7);">
+                Questions? <a href="mailto:${escHtml(supportEmail)}" style="color:#d6a23a;text-decoration:none;">${escHtml(supportEmail)}</a>
+              </p>
+              <p style="margin:0;font-size:11px;color:rgba(248,241,223,.4);">
+                Kavanah Pouch &nbsp;&middot;&nbsp;
+                <a href="https://kavanahpouch.com" style="color:rgba(248,241,223,.4);text-decoration:none;">KavanahPouch.com</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+async function safeSendBulkEmail(inquiry, subject, html, text) {
+  if (!process.env.RESEND_API_KEY) return;
+  if (!inquiry.email) return;
+  const supportEmail = SUPPORT_EMAIL();
+  const { error } = await getResend().emails.send({
+    from:    CUSTOMER_FROM(),
+    to:      [inquiry.email],
+    replyTo: supportEmail,
+    subject,
+    html,
+    text,
+  });
+  if (error) throw new Error(error.message || JSON.stringify(error));
+}
+
+// ── Email 2: Quote ────────────────────────────────────────────────────────────
+async function sendBulkQuoteEmail(inquiry) {
+  const firstName    = (inquiry.name || '').split(' ')[0] || 'there';
+  const supportEmail = SUPPORT_EMAIL();
+  const qty          = inquiry.quantity_pouches || inquiry.quantity_requested || 0;
+  const bundleCents  = inquiry.quoted_bundle_cents;
+  const shippingCents = inquiry.quoted_shipping_cents;
+  const totalCents   = inquiry.quoted_total_cents;
+
+  const bundleRow = bundleCents != null
+    ? `<tr><td style="font-size:13px;color:#667085;font-weight:600;padding:3px 0;padding-right:16px">Bundle (${qty} pouches)</td><td style="font-size:13px;color:#132133;font-weight:700">${fmtMoney(bundleCents)}</td></tr>`
+    : '';
+  const shippingRow = shippingCents != null
+    ? `<tr><td style="font-size:13px;color:#667085;padding:3px 0;padding-right:16px">Shipping</td><td style="font-size:13px;color:#132133">${fmtShipping(shippingCents)}</td></tr>`
+    : '';
+  const totalRow = totalCents != null
+    ? `<tr><td colspan="2" style="padding:6px 0 0;"><hr style="border:none;border-top:1px solid rgba(19,33,51,.1);margin:0;"></td></tr>
+       <tr><td style="font-size:14px;font-weight:700;color:#132133;padding:8px 0 0">Total</td><td style="font-size:14px;font-weight:800;color:#001f42;padding:8px 0 0">${fmtMoney(totalCents)}</td></tr>`
+    : '';
+
+  const bodyHtml = `
+    <p style="margin:0 0 20px;font-size:14px;color:#132133;line-height:1.7;">Here is the pricing for your bulk Kavanah Pouch order. Please review the details below and reply to this email to confirm, or let us know if you have any questions.</p>
+    ${(bundleRow || shippingRow || totalRow) ? `
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#fff;border-radius:10px;border:1px solid rgba(19,33,51,.12);margin-bottom:24px;">
+      <tr><td style="padding:20px 24px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#667085;margin-bottom:14px;">Your Quote</div>
+        <table width="100%" cellpadding="0" cellspacing="4" role="presentation">
+          ${bundleRow}${shippingRow}${totalRow}
+        </table>
+      </td></tr>
+    </table>` : ''}
+    ${inquiry.is_dedication && inquiry.dedication_text ? `
+    <p style="margin:0 0 20px;font-size:13px;color:#132133;line-height:1.7;"><strong>Dedication text:</strong> <em>${escHtml(inquiry.dedication_text)}</em></p>` : ''}
+    <p style="margin:0 0 20px;font-size:13px;color:#132133;line-height:1.7;">Once you confirm, we will send a Stripe invoice for secure online payment. No charge until you approve.</p>`;
+
+  const html = buildBulkEmailHtml({ firstName, subject: 'Your Bulk Order Quote — Kavanah Pouch', bodyHtml, supportEmail });
+
+  const text = [
+    `Hi ${firstName},`,
+    '',
+    'Here is your bulk Kavanah Pouch order quote:',
+    bundleCents != null ? `Bundle (${qty} pouches): ${fmtMoney(bundleCents)}` : '',
+    shippingCents != null ? `Shipping: ${fmtShipping(shippingCents)}` : '',
+    totalCents != null ? `Total: ${fmtMoney(totalCents)}` : '',
+    '',
+    inquiry.is_dedication && inquiry.dedication_text ? `Dedication text: ${inquiry.dedication_text}` : '',
+    '',
+    'Reply to confirm and we will send a payment invoice.',
+    '',
+    `Questions? ${supportEmail}`,
+  ].filter(Boolean).join('\n');
+
+  await safeSendBulkEmail(inquiry, 'Your Bulk Order Quote — Kavanah Pouch', html, text);
+  console.log(`Bulk quote email sent to ${inquiry.email}`);
+}
+
+// ── Email 3: Invoice sent ─────────────────────────────────────────────────────
+async function sendBulkInvoiceEmail(inquiry) {
+  const firstName    = (inquiry.name || '').split(' ')[0] || 'there';
+  const supportEmail = SUPPORT_EMAIL();
+  const invoiceUrl   = inquiry.stripe_invoice_url;
+  const totalCents   = inquiry.quoted_total_cents;
+  const qty          = inquiry.quantity_pouches || inquiry.quantity_requested || 0;
+
+  const btnHtml = invoiceUrl
+    ? `<p style="text-align:center;margin:24px 0;"><a href="${escHtml(invoiceUrl)}" style="display:inline-block;background:#d6a23a;color:#001f42;font-weight:800;font-size:.95rem;padding:.85rem 2rem;border-radius:999px;text-decoration:none;">Pay Invoice Securely →</a></p>`
+    : '';
+
+  const bodyHtml = `
+    <p style="margin:0 0 20px;font-size:14px;color:#132133;line-height:1.7;">Your bulk Kavanah Pouch order is confirmed! We&#8217;ve created a secure invoice for your payment.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#fff;border-radius:10px;border:1px solid rgba(19,33,51,.12);margin-bottom:20px;">
+      <tr><td style="padding:20px 24px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#667085;margin-bottom:14px;">Invoice Summary</div>
+        <table width="100%" cellpadding="0" cellspacing="4" role="presentation">
+          <tr><td style="font-size:13px;color:#667085;padding-right:16px">Quantity</td><td style="font-size:13px;color:#132133;font-weight:700">${qty} pouches</td></tr>
+          ${totalCents != null ? `<tr><td style="font-size:14px;font-weight:700;color:#132133;padding-top:8px">Total Due</td><td style="font-size:14px;font-weight:800;color:#001f42;padding-top:8px">${fmtMoney(totalCents)}</td></tr>` : ''}
+          ${inquiry.stripe_invoice_number ? `<tr><td style="font-size:12px;color:#667085;padding-top:4px">Invoice #</td><td style="font-size:12px;color:#132133;padding-top:4px">${escHtml(inquiry.stripe_invoice_number)}</td></tr>` : ''}
+        </table>
+      </td></tr>
+    </table>
+    ${btnHtml}
+    <p style="margin:0 0 12px;font-size:13px;color:#132133;line-height:1.7;">Payment is processed securely via Stripe. Once your payment is received we will begin preparing your order for shipment.</p>`;
+
+  const html = buildBulkEmailHtml({ firstName, subject: 'Invoice Ready — Kavanah Pouch Bulk Order', bodyHtml, supportEmail });
+
+  const text = [
+    `Hi ${firstName},`,
+    '',
+    'Your bulk Kavanah Pouch order invoice is ready for payment.',
+    `Quantity: ${qty} pouches`,
+    totalCents != null ? `Total Due: ${fmtMoney(totalCents)}` : '',
+    invoiceUrl ? `\nPay securely here: ${invoiceUrl}` : '',
+    '',
+    `Questions? ${supportEmail}`,
+  ].filter(Boolean).join('\n');
+
+  await safeSendBulkEmail(inquiry, 'Invoice Ready — Kavanah Pouch Bulk Order', html, text);
+  console.log(`Bulk invoice email sent to ${inquiry.email}`);
+}
+
+// ── Email 4: Payment received ─────────────────────────────────────────────────
+async function sendBulkPaymentReceivedEmail(inquiry) {
+  const firstName    = (inquiry.name || '').split(' ')[0] || 'there';
+  const supportEmail = SUPPORT_EMAIL();
+  const qty          = inquiry.quantity_pouches || inquiry.quantity_requested || 0;
+  const totalCents   = inquiry.quoted_total_cents;
+
+  const bodyHtml = `
+    <p style="margin:0 0 20px;font-size:14px;color:#132133;line-height:1.7;">We&#8217;ve received your payment — thank you! We are now preparing your ${qty}-pouch order for shipment.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#fff;border-radius:10px;border:1px solid rgba(19,33,51,.12);margin-bottom:24px;">
+      <tr><td style="padding:20px 24px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#667085;margin-bottom:14px;">Payment Confirmed</div>
+        <table width="100%" cellpadding="0" cellspacing="4" role="presentation">
+          <tr><td style="font-size:13px;color:#667085;padding-right:16px">Quantity</td><td style="font-size:13px;color:#132133;font-weight:700">${qty} pouches</td></tr>
+          ${totalCents != null ? `<tr><td style="font-size:14px;font-weight:700;color:#132133;padding-top:8px">Amount Paid</td><td style="font-size:14px;font-weight:800;color:#16a34a;padding-top:8px">${fmtMoney(totalCents)}</td></tr>` : ''}
+        </table>
+      </td></tr>
+    </table>
+    <p style="margin:0 0 20px;font-size:13px;color:#132133;line-height:1.7;">You will receive another email with tracking information once your order ships. Bulk orders typically ship within 2&#8211;3 business days.</p>`;
+
+  const html = buildBulkEmailHtml({ firstName, subject: 'Payment Received — Kavanah Pouch Bulk Order', bodyHtml, supportEmail });
+
+  const text = [
+    `Hi ${firstName},`,
+    '',
+    `Payment received — thank you! Your ${qty}-pouch order is now being prepared for shipment.`,
+    totalCents != null ? `Amount Paid: ${fmtMoney(totalCents)}` : '',
+    '',
+    'You will receive tracking info once your order ships.',
+    `Questions? ${supportEmail}`,
+  ].filter(Boolean).join('\n');
+
+  await safeSendBulkEmail(inquiry, 'Payment Received — Kavanah Pouch Bulk Order', html, text);
+  console.log(`Bulk payment received email sent to ${inquiry.email}`);
+}
+
+// ── Email 5: Shipping confirmation ────────────────────────────────────────────
+async function sendBulkShippingConfirmationEmail(inquiry) {
+  const firstName     = (inquiry.name || '').split(' ')[0] || 'there';
+  const supportEmail  = SUPPORT_EMAIL();
+  const qty           = inquiry.quantity_pouches || inquiry.quantity_requested || 0;
+  const carrier       = inquiry.tracking_carrier || 'carrier';
+  const trackingNum   = inquiry.tracking_number;
+  const trackingUrl   = inquiry.tracking_url;
+
+  const trackingBlock = trackingNum ? `
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#fff;border-radius:10px;border:1px solid rgba(19,33,51,.12);margin-bottom:20px;">
+      <tr><td style="padding:20px 24px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#667085;margin-bottom:14px;">Tracking Info</div>
+        <table width="100%" cellpadding="0" cellspacing="4" role="presentation">
+          <tr><td style="font-size:13px;color:#667085;padding-right:16px">Carrier</td><td style="font-size:13px;color:#132133;font-weight:700">${escHtml(carrier)}</td></tr>
+          <tr><td style="font-size:13px;color:#667085;padding-right:16px">Tracking #</td><td style="font-size:13px;color:#132133;font-weight:700">${trackingUrl ? `<a href="${escHtml(trackingUrl)}" style="color:#d6a23a;">${escHtml(trackingNum)}</a>` : escHtml(trackingNum)}</td></tr>
+        </table>
+      </td></tr>
+    </table>
+    ${trackingUrl ? `<p style="text-align:center;margin:0 0 20px;"><a href="${escHtml(trackingUrl)}" style="display:inline-block;background:#001f42;color:#f8f1df;font-weight:700;font-size:.9rem;padding:.75rem 1.8rem;border-radius:999px;text-decoration:none;">Track Your Package →</a></p>` : ''}` : '';
+
+  const bodyHtml = `
+    <p style="margin:0 0 20px;font-size:14px;color:#132133;line-height:1.7;">Great news &#8212; your ${qty}-pouch Kavanah Pouch order has shipped!</p>
+    ${trackingBlock}
+    <p style="margin:0 0 20px;font-size:13px;color:#132133;line-height:1.7;">Your pouches are on their way. Please allow 1&#8211;3 business days for transit time depending on your location.</p>`;
+
+  const html = buildBulkEmailHtml({ firstName, subject: 'Your Bulk Order Has Shipped! — Kavanah Pouch', bodyHtml, supportEmail });
+
+  const text = [
+    `Hi ${firstName},`,
+    '',
+    `Your ${qty}-pouch Kavanah Pouch order has shipped!`,
+    trackingNum ? `Carrier: ${carrier}` : '',
+    trackingNum ? `Tracking: ${trackingNum}` : '',
+    trackingUrl ? `Track here: ${trackingUrl}` : '',
+    '',
+    `Questions? ${supportEmail}`,
+  ].filter(Boolean).join('\n');
+
+  await safeSendBulkEmail(inquiry, 'Your Bulk Order Has Shipped! — Kavanah Pouch', html, text);
+  console.log(`Bulk shipping confirmation email sent to ${inquiry.email}`);
+}
+
 module.exports = {
   sendOrderConfirmationEmail,
   sendPasswordResetEmail,
   notifyNewOrder,
   notifyNewBulkInquiry,
   sendBulkInquiryConfirmation,
+  sendBulkQuoteEmail,
+  sendBulkInvoiceEmail,
+  sendBulkPaymentReceivedEmail,
+  sendBulkShippingConfirmationEmail,
   notifyNewSupportMessage,
   notifyNewFeedback,
   notifyNewWaitlistSignup,
