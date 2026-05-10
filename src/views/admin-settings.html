@@ -31,6 +31,14 @@
     .alert-success{background:#dcfce7;border:1px solid #86efac;color:#16a34a}
     .alert-error{background:#fee2e2;border:1px solid #fca5a5;color:#dc2626}
     .hint{font-size:.78rem;color:var(--muted);margin-top:.3rem;font-weight:400}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.5rem 0}
+    .toggle-row span{font-size:.85rem;font-weight:600;color:var(--ink)}
+    .toggle{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0}
+    .toggle input{opacity:0;width:0;height:0}
+    .toggle-track{position:absolute;inset:0;background:#d1d5db;border-radius:999px;transition:background 200ms;cursor:pointer}
+    .toggle input:checked+.toggle-track{background:var(--gold)}
+    .toggle-track::after{content:'';position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform 200ms;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+    .toggle input:checked+.toggle-track::after{transform:translateX(18px)}
   </style>
 </head>
 <body>
@@ -55,6 +63,23 @@
   <div class="main">
     <div class="topbar"><h1>Settings</h1></div>
     <div class="content">
+      <div class="card" style="margin-bottom:1.2rem">
+        <h2>Packing Slips</h2>
+        <div id="settings-alert" style="display:none" class="alert"></div>
+        <div class="toggle-row">
+          <span>Include prices on packing slips</span>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-prices" onchange="saveSettings()">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="hint" style="margin-top:.5rem">When enabled, item prices, discounts, and order totals are printed on packing slips.</div>
+        <div style="margin-top:1.2rem;display:flex;gap:.6rem;flex-wrap:wrap">
+          <a href="/admin/orders/packing-slips/bulk?status=unfulfilled" target="_blank" class="btn btn-navy" style="font-size:.82rem;text-decoration:none">🖨 Print All Unfulfilled</a>
+          <a href="/admin/orders/packing-slips/bulk?status=exported" target="_blank" class="btn btn-ghost" style="font-size:.82rem;text-decoration:none">🖨 Print All Exported</a>
+        </div>
+      </div>
+
       <div class="card">
         <h2>Change Password</h2>
         <div id="alert" style="display:none" class="alert"></div>
@@ -79,6 +104,42 @@
   </div>
 
   <script>
+    // ── Packing slip settings ─────────────────────────────────────────────────
+    (async function loadSettings() {
+      try {
+        const s = await fetch('/admin/api/settings').then(r => r.json());
+        document.getElementById('toggle-prices').checked = s.packing_slip_include_prices !== 'false';
+      } catch(e) {}
+    })();
+
+    async function saveSettings() {
+      const al = document.getElementById('settings-alert');
+      al.style.display = 'none';
+      try {
+        const val = document.getElementById('toggle-prices').checked ? 'true' : 'false';
+        const r = await fetch('/admin/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ packing_slip_include_prices: val }),
+        });
+        if (r.ok) {
+          al.className = 'alert alert-success';
+          al.textContent = '✓ Setting saved.';
+          al.style.display = 'block';
+          setTimeout(() => al.style.display = 'none', 2500);
+        } else {
+          al.className = 'alert alert-error';
+          al.textContent = 'Error saving setting.';
+          al.style.display = 'block';
+        }
+      } catch(e) {
+        al.className = 'alert alert-error';
+        al.textContent = 'Network error — please try again.';
+        al.style.display = 'block';
+      }
+    }
+
+    // ── Password change alerts ────────────────────────────────────────────────
     const p = new URLSearchParams(location.search);
     const el = document.getElementById('alert');
     const msgs = {

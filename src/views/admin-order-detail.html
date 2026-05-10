@@ -16,9 +16,10 @@
     .sidebar-footer{padding:1rem 1.2rem;border-top:1px solid rgba(248,241,223,.12)}
     .sidebar-footer form button{background:none;border:none;color:rgba(248,241,223,.5);font:inherit;font-size:.82rem;cursor:pointer;padding:0}
     .main{flex:1;overflow:auto}
-    .topbar{background:#fff;border-bottom:1px solid var(--line);padding:.9rem 1.6rem;display:flex;align-items:center;gap:1rem}
-    .topbar h1{margin:0;font-size:1.2rem;font-weight:800}
+    .topbar{background:#fff;border-bottom:1px solid var(--line);padding:.9rem 1.6rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    .topbar h1{margin:0;font-size:1.2rem;font-weight:800;flex:1}
     .back-link{color:var(--gold);font-weight:700;font-size:.88rem}
+    .topbar-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-left:auto}
     .content{padding:1.6rem;display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
     .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,31,66,.05)}
     .card h2{margin:0 0 1rem;font-size:1rem;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.06em}
@@ -66,6 +67,9 @@
     <div class="topbar">
       <a class="back-link" href="/admin/orders">← Orders</a>
       <h1 id="order-title">Order</h1>
+      <div class="topbar-actions">
+        <a id="slip-btn" class="btn btn-ghost" href="#" target="_blank" style="font-size:.82rem;text-decoration:none">🖨 Packing Slip</a>
+      </div>
     </div>
     <div class="content" id="content">
       <div class="card"><p style="color:var(--muted)">Loading…</p></div>
@@ -85,6 +89,7 @@
 
     fetch(`/admin/api/orders/${id}`).then(r=>r.json()).then(o=>{
       document.getElementById('order-title').textContent = o.order_number;
+      document.getElementById('slip-btn').href = `/admin/orders/${o.id}/packing-slip`;
       const saved = p.get('saved')?'<div class="alert">✓ Saved successfully.</div>':'';
       document.getElementById('content').innerHTML = `
         ${saved?`<div style="grid-column:1/-1">${saved}</div>`:''}

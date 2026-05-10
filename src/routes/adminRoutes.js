@@ -17,6 +17,8 @@ const {
   getSummary, getDailyStats, getTopReferrers, getTopPages,
   getDeviceBreakdown, getFunnel, getRecentEvents, getUtmStats, getCouponStats,
 } = require('../services/analyticsService');
+const { getSetting, getAllSettings, setSettings } = require('../services/settingsService');
+const { renderPackingSlipDocument } = require('../services/packingSlipService');
 
 const router = express.Router();
 
@@ -457,6 +459,79 @@ router.post('/admin/settings/change-password', requireAdmin,
     }
   }
 );
+
+// ── Packing Slips ─────────────────────────────────────────────────────────────
+
+// Single order packing slip
+router.get('/admin/orders/:id/packing-slip', requireAdmin, async (req, res) => {
+  try {
+    const order = await getOrderById(req.params.id);
+    if (!order) return res.status(404).send('Order not found');
+    const includePrices = (await getSetting('packing_slip_include_prices', 'true')) === 'true';
+    const html = renderPackingSlipDocument([order], includePrices);
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send('Error generating packing slip: ' + err.message);
+  }
+});
+
+// Bulk packing slips — query params: ids=1,2,3  OR  status=unfulfilled|exported|all
+router.get('/admin/orders/packing-slips/bulk', requireAdmin, async (req, res) => {
+  try {
+    let orders = [];
+    if (req.query.ids) {
+      const ids = req.query.ids.split(',').map(s => parseInt(s, 10)).filter(Boolean);
+      if (!ids.length) return res.status(400).send('No valid IDs');
+      // Fetch each order individually (preserves item arrays)
+      orders = (await Promise.all(ids.map(id => getOrderById(id)))).filter(Boolean);
+    } else {
+      const status = req.query.status || 'unfulfilled';
+      const filters = status === 'all'
+        ? { payment_status: 'paid' }
+        : { payment_status: 'paid', fulfillment_status: status };
+      const rows = await getOrders(filters);
+      // Attach items for each order
+      orders = await Promise.all(rows.map(o => getOrderById(o.id)));
+      orders = orders.filter(Boolean);
+    }
+    if (!orders.length) return res.status(404).send('No orders found');
+    const includePrices = (await getSetting('packing_slip_include_prices', 'true')) === 'true';
+    const html = renderPackingSlipDocument(orders, includePrices);
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send('Error generating packing slips: ' + err.message);
+  }
+});
+
+// ── Admin Settings API ────────────────────────────────────────────────────────
+
+router.get('/admin/api/settings', requireAdmin, async (req, res) => {
+  try {
+    const settings = await getAllSettings();
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/admin/api/settings', requireAdmin, async (req, res) => {
+  try {
+    const allowed = ['packing_slip_include_prices'];
+    const updates = {};
+    for (const key of allowed) {
+      if (Object.prototype.hasOwnProperty.call(req.body, key)) {
+        updates[key] = req.body[key];
+      }
+    }
+    if (!Object.keys(updates).length) return res.status(400).json({ error: 'No valid keys' });
+    await setSettings(updates);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ── Forgot password ───────────────────────────────────────────────────────────
 router.get('/admin/forgot-password', (req, res) => {

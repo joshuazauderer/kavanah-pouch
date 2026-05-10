@@ -91,6 +91,7 @@
     <div class="topbar">
       <h1>Orders</h1>
       <div class="topbar-actions">
+        <button class="btn btn-ghost" id="bulk-slip-btn" style="display:none" onclick="printSelectedSlips()">🖨 Print Selected Slips</button>
         <a href="/admin/orders/export/pirate-ship.csv" class="btn btn-gold">⬇ Export CSV (Pirate Ship)</a>
       </div>
     </div>
@@ -105,6 +106,7 @@
         <table>
           <thead>
             <tr>
+              <th style="width:36px;text-align:center"><input type="checkbox" id="select-all" title="Select all visible" onchange="toggleSelectAll(this)"></th>
               <th>Order #</th>
               <th>Date</th>
               <th>Customer</th>
@@ -117,7 +119,7 @@
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="orders-body"><tr><td colspan="10" class="empty">Loading…</td></tr></tbody>
+          <tbody id="orders-body"><tr><td colspan="11" class="empty">Loading…</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -198,14 +200,17 @@
 
     function render(orders) {
       const tbody = document.getElementById('orders-body');
+      document.getElementById('select-all').checked = false;
+      updateBulkBtn();
       if (!orders.length) {
-        tbody.innerHTML='<tr><td colspan="10" class="empty">No orders found.</td></tr>';
+        tbody.innerHTML='<tr><td colspan="11" class="empty">No orders found.</td></tr>';
         return;
       }
       tbody.innerHTML = orders.map(o => {
         const canShip = o.payment_status === 'paid' && o.fulfillment_status !== 'shipped' && o.fulfillment_status !== 'canceled';
         return `
         <tr>
+          <td style="text-align:center"><input type="checkbox" class="row-check" data-id="${o.id}" onchange="updateBulkBtn()"></td>
           <td><strong style="font-size:.85rem">${o.order_number}</strong></td>
           <td style="white-space:nowrap">${fmtDate(o.created_at)}</td>
           <td>
@@ -226,11 +231,34 @@
           <td>
             <div class="actions-cell">
               <a class="btn btn-sm btn-ghost" href="/admin/orders/${o.id}">View</a>
+              <a class="btn btn-sm btn-ghost" href="/admin/orders/${o.id}/packing-slip" target="_blank" title="Print packing slip">🖨</a>
               ${canShip ? `<button class="btn btn-sm btn-navy" onclick="openShipModal(${o.id},'${escHtml(o.order_number)}')">Ship</button>` : ''}
             </div>
           </td>
         </tr>`;
       }).join('');
+    }
+
+    function toggleSelectAll(cb) {
+      document.querySelectorAll('.row-check').forEach(c => c.checked = cb.checked);
+      updateBulkBtn();
+    }
+
+    function updateBulkBtn() {
+      const checked = document.querySelectorAll('.row-check:checked').length;
+      const btn = document.getElementById('bulk-slip-btn');
+      if (checked > 0) {
+        btn.style.display = '';
+        btn.textContent = `🖨 Print ${checked} Packing Slip${checked !== 1 ? 's' : ''}`;
+      } else {
+        btn.style.display = 'none';
+      }
+    }
+
+    function printSelectedSlips() {
+      const ids = [...document.querySelectorAll('.row-check:checked')].map(c => c.dataset.id).join(',');
+      if (!ids) return;
+      window.open(`/admin/orders/packing-slips/bulk?ids=${encodeURIComponent(ids)}`, '_blank');
     }
 
     function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
