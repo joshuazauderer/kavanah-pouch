@@ -497,12 +497,19 @@ async function notifyNewFeedback(feedback) {
 }
 
 async function notifyNewWaitlistSignup(signup) {
+  const interestLabels = {
+    personal: 'Personal use',
+    gift:     'Gift',
+    bulk:     'Shul / yeshiva bulk order',
+  };
+  const interestLabel = interestLabels[signup.interest_type] || signup.interest_type || 'Not specified';
+
   await sendOwnerNotification(
-    `New waitlist signup: ${signup.email}`,
+    `KavanahPouch.com Waitlist Request: ${signup.email} — ${interestLabel}`,
     `<p><strong>New waitlist signup!</strong></p>
      <p>Email: ${signup.email}<br>
      Name: ${signup.name || 'N/A'}<br>
-     Interest: ${signup.interest_type || 'N/A'}</p>`
+     Interest: ${interestLabel}</p>`
   );
 }
 
