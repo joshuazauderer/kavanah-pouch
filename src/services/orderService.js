@@ -26,6 +26,7 @@ async function createOrderFromStripe(session) {
     const priceKey = session.metadata?.priceKey || 'one_pouch';
     const isGift = session.metadata?.is_gift === 'true';
     const giftRecipientName = session.metadata?.gift_recipient_name || null;
+    const giftMessage = session.metadata?.gift_message || null;
     const pouchesPerPack = config.stripe.pouchesPerPack;
     const quantityPouches = pouchesPerPack[priceKey] || 1;
 
@@ -70,8 +71,8 @@ async function createOrderFromStripe(session) {
         subtotal_cents, shipping_cents, tax_cents, discount_amount_cents,
         discount_code, total_cents,
         currency, payment_status, fulfillment_status,
-        is_gift, gift_recipient_name
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,'paid','unfulfilled',$20,$21)
+        is_gift, gift_recipient_name, gift_message
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,'paid','unfulfilled',$20,$21,$22)
       RETURNING *`,
       [
         orderNumber,
@@ -95,6 +96,7 @@ async function createOrderFromStripe(session) {
         session.currency || 'usd',
         isGift,
         giftRecipientName,
+        giftMessage,
       ]
     );
 

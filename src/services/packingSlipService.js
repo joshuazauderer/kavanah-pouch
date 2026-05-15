@@ -77,6 +77,7 @@ function renderSlip(order, includePrices) {
           <div class="section-label">Ship To</div>
           <div class="address">${buildAddress(order)}</div>
           ${order.is_gift && order.gift_recipient_name ? `<div class="gift-recipient">🎁 Gift for: <strong>${esc(order.gift_recipient_name)}</strong></div>` : ''}
+          ${order.is_gift && order.gift_message ? `<div class="gift-message">"${esc(order.gift_message)}"</div>` : ''}
         </div>
 
         <div class="slip-section">
@@ -244,6 +245,7 @@ function renderPackingSlipDocument(orders, includePrices = true) {
 
     .address { font-size: 12px; line-height: 1.65; }
     .gift-recipient { font-size: 11px; margin-top: .4rem; color: #444; }
+    .gift-message { font-size: 11px; font-style: italic; margin-top: .3rem; color: #444; line-height: 1.55; }
 
     /* ── Items table ─────────────────────────────────────────────────────── */
     .items-table {

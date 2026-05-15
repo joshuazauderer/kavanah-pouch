@@ -976,11 +976,28 @@ details p { margin: 0.75rem 0 0; color: var(--muted); }
   outline: none;
   transition: border-color 150ms, box-shadow 150ms;
 }
-.gift-fields input:focus {
+.gift-fields input:focus,
+.gift-fields textarea:focus {
   border-color: var(--gold);
   box-shadow: 0 0 0 3px rgba(214,162,58,.18);
 }
-.gift-fields input::placeholder { color: #aab0bc; }
+.gift-fields input::placeholder,
+.gift-fields textarea::placeholder { color: #aab0bc; }
+.gift-fields textarea {
+  width: 100%;
+  padding: .55rem .75rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font: inherit;
+  font-size: .88rem;
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+  resize: vertical;
+  min-height: 72px;
+  transition: border-color 150ms, box-shadow 150ms;
+  margin-top: .45rem;
+}
 
 /* ── Responsive: bulk pricing grid ────────────────────────────── */
 @media (max-width: 1024px) {
