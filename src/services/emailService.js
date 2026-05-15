@@ -118,7 +118,7 @@ function buildOrderConfirmationContent(order, items) {
           <tr>
             <td style="background:#001f42;border-radius:14px 14px 0 0;padding:30px 40px;text-align:center;">
               <div style="font-size:20px;font-weight:800;color:#d6a23a;letter-spacing:.08em;text-transform:uppercase;">Kavanah Pouch</div>
-              <div style="font-size:11px;color:rgba(248,241,223,.6);margin-top:6px;letter-spacing:.1em;text-transform:uppercase;">Daven without distractions</div>
+              <div style="font-size:11px;color:#a8a296;margin-top:6px;letter-spacing:.1em;text-transform:uppercase;">Daven without distractions</div>
             </td>
           </tr>
 
@@ -208,12 +208,12 @@ function buildOrderConfirmationContent(order, items) {
           <!-- FOOTER -->
           <tr>
             <td style="background:#001f42;border-radius:0 0 14px 14px;padding:22px 40px;text-align:center;">
-              <p style="margin:0 0 6px;font-size:12px;color:rgba(248,241,223,.7);">
+              <p style="margin:0 0 6px;font-size:12px;color:#c8bfac;">
                 Questions? <a href="mailto:${escHtml(supportEmail)}" style="color:#d6a23a;text-decoration:none;">${escHtml(supportEmail)}</a>
               </p>
-              <p style="margin:0;font-size:11px;color:rgba(248,241,223,.4);">
+              <p style="margin:0;font-size:11px;color:#8898aa;">
                 Kavanah Pouch &nbsp;&middot;&nbsp;
-                <a href="https://kavanahpouch.com" style="color:rgba(248,241,223,.4);text-decoration:none;">KavanahPouch.com</a>
+                <a href="https://kavanahpouch.com" style="color:#8898aa;text-decoration:none;">KavanahPouch.com</a>
               </p>
             </td>
           </tr>
@@ -408,7 +408,7 @@ async function sendBulkInquiryConfirmation(inquiry) {
           <tr>
             <td style="background:#001f42;border-radius:14px 14px 0 0;padding:28px 40px;text-align:center;">
               <div style="font-size:20px;font-weight:800;color:#d6a23a;letter-spacing:.08em;text-transform:uppercase;">Kavanah Pouch</div>
-              <div style="font-size:11px;color:rgba(248,241,223,.6);margin-top:6px;letter-spacing:.1em;text-transform:uppercase;">Daven without distractions</div>
+              <div style="font-size:11px;color:#a8a296;margin-top:6px;letter-spacing:.1em;text-transform:uppercase;">Daven without distractions</div>
             </td>
           </tr>
 
@@ -460,12 +460,12 @@ async function sendBulkInquiryConfirmation(inquiry) {
           <!-- FOOTER -->
           <tr>
             <td style="background:#001f42;border-radius:0 0 14px 14px;padding:22px 40px;text-align:center;">
-              <p style="margin:0 0 6px;font-size:12px;color:rgba(248,241,223,.7);">
+              <p style="margin:0 0 6px;font-size:12px;color:#c8bfac;">
                 Questions? <a href="mailto:${escHtml(supportEmail)}" style="color:#d6a23a;text-decoration:none;">${escHtml(supportEmail)}</a>
               </p>
-              <p style="margin:0;font-size:11px;color:rgba(248,241,223,.4);">
+              <p style="margin:0;font-size:11px;color:#8898aa;">
                 Kavanah Pouch &nbsp;&middot;&nbsp;
-                <a href="https://kavanahpouch.com" style="color:rgba(248,241,223,.4);text-decoration:none;">KavanahPouch.com</a>
+                <a href="https://kavanahpouch.com" style="color:#8898aa;text-decoration:none;">KavanahPouch.com</a>
               </p>
             </td>
           </tr>
@@ -578,10 +578,10 @@ async function sendPasswordResetEmail(toEmail, resetUrl) {
             <td style="padding:36px 40px;text-align:center;">
               <div style="font-size:14px;font-weight:800;color:#d6a23a;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">Kavanah Pouch · Admin</div>
               <h1 style="margin:0 0 8px;font-size:1.5rem;color:#f8f1df;">Reset Your Password</h1>
-              <p style="margin:0 0 28px;font-size:.9rem;color:rgba(248,241,223,.6);">Click the button below to set a new password. This link expires in 1 hour.</p>
+              <p style="margin:0 0 28px;font-size:.9rem;color:#a8a296;">Click the button below to set a new password. This link expires in 1 hour.</p>
               <a href="${escHtml(resetUrl)}" style="display:inline-block;background:#d6a23a;color:#001f42;font-weight:800;font-size:.95rem;padding:.85rem 2rem;border-radius:999px;text-decoration:none;">Reset Password</a>
-              <p style="margin:24px 0 0;font-size:.8rem;color:rgba(248,241,223,.4);">If you didn&#8217;t request this, ignore this email &#8212; your password won&#8217;t change.</p>
-              <p style="margin:8px 0 0;font-size:.8rem;color:rgba(248,241,223,.3);">Or copy this link: <span style="word-break:break-all;">${escHtml(resetUrl)}</span></p>
+              <p style="margin:24px 0 0;font-size:.8rem;color:#8898aa;">If you didn&#8217;t request this, ignore this email &#8212; your password won&#8217;t change.</p>
+              <p style="margin:8px 0 0;font-size:.8rem;color:#6e8090;">Or copy this link: <span style="word-break:break-all;">${escHtml(resetUrl)}</span></p>
             </td>
           </tr>
         </table>
@@ -627,7 +627,7 @@ function buildBulkEmailHtml({ firstName, subject, bodyHtml, supportEmail }) {
           <tr>
             <td style="background:#001f42;border-radius:14px 14px 0 0;padding:28px 40px;text-align:center;">
               <div style="font-size:20px;font-weight:800;color:#d6a23a;letter-spacing:.08em;text-transform:uppercase;">Kavanah Pouch</div>
-              <div style="font-size:11px;color:rgba(248,241,223,.6);margin-top:6px;letter-spacing:.1em;text-transform:uppercase;">Daven without distractions</div>
+              <div style="font-size:11px;color:#a8a296;margin-top:6px;letter-spacing:.1em;text-transform:uppercase;">Daven without distractions</div>
             </td>
           </tr>
           <tr>
@@ -640,12 +640,12 @@ function buildBulkEmailHtml({ firstName, subject, bodyHtml, supportEmail }) {
           </tr>
           <tr>
             <td style="background:#001f42;border-radius:0 0 14px 14px;padding:22px 40px;text-align:center;">
-              <p style="margin:0 0 6px;font-size:12px;color:rgba(248,241,223,.7);">
+              <p style="margin:0 0 6px;font-size:12px;color:#c8bfac;">
                 Questions? <a href="mailto:${escHtml(supportEmail)}" style="color:#d6a23a;text-decoration:none;">${escHtml(supportEmail)}</a>
               </p>
-              <p style="margin:0;font-size:11px;color:rgba(248,241,223,.4);">
+              <p style="margin:0;font-size:11px;color:#8898aa;">
                 Kavanah Pouch &nbsp;&middot;&nbsp;
-                <a href="https://kavanahpouch.com" style="color:rgba(248,241,223,.4);text-decoration:none;">KavanahPouch.com</a>
+                <a href="https://kavanahpouch.com" style="color:#8898aa;text-decoration:none;">KavanahPouch.com</a>
               </p>
             </td>
           </tr>
