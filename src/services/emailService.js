@@ -62,6 +62,13 @@ function buildOrderConfirmationContent(order, items) {
   ].filter(Boolean);
 
   // ── Plain text ─────────────────────────────────────────────────────────
+  const giftTextLines = order.is_gift ? [
+    '',
+    '🎁 Gift Details:',
+    order.gift_recipient_name ? `Gift for: ${order.gift_recipient_name}` : '',
+    order.gift_message ? `Message: "${order.gift_message}"` : '',
+  ].filter(Boolean) : [];
+
   const text = [
     `Hi ${firstName},`,
     '',
@@ -76,6 +83,7 @@ function buildOrderConfirmationContent(order, items) {
     '',
     'Shipping Address:',
     ...addrLines,
+    ...giftTextLines,
     '',
     'We are preparing your order for shipment. Once your package ships, you will receive a tracking email.',
     '',
@@ -167,7 +175,7 @@ function buildOrderConfirmationContent(order, items) {
               </table>
 
               <!-- SHIPPING ADDRESS -->
-              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#fff;border-radius:10px;border:1px solid rgba(19,33,51,.12);margin-bottom:28px;">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#fff;border-radius:10px;border:1px solid rgba(19,33,51,.12);margin-bottom:${order.is_gift ? '16px' : '28px'};">
                 <tr>
                   <td style="padding:20px 24px;">
                     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#667085;margin-bottom:10px;">Shipping Address</div>
@@ -175,6 +183,18 @@ function buildOrderConfirmationContent(order, items) {
                   </td>
                 </tr>
               </table>
+
+              ${order.is_gift ? `
+              <!-- GIFT DETAILS -->
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#fffbeb;border-radius:10px;border:1px solid #fde68a;margin-bottom:28px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#92400e;margin-bottom:10px;">🎁 Gift Details</div>
+                    ${order.gift_recipient_name ? `<div style="font-size:13px;color:#132133;margin-bottom:${order.gift_message ? '8px' : '0'}"><span style="color:#667085;font-weight:600;">Gift for:</span> <strong>${escHtml(order.gift_recipient_name)}</strong></div>` : ''}
+                    ${order.gift_message ? `<div style="font-size:13px;color:#132133;font-style:italic;line-height:1.7;">"${escHtml(order.gift_message)}"</div>` : ''}
+                  </td>
+                </tr>
+              </table>` : ''}
 
               <p style="margin:0 0 10px;font-size:13px;color:#132133;line-height:1.7;">We are preparing your order for shipment. Once your package ships, you will receive a tracking email from Pirate Ship with your tracking number.</p>
               <p style="margin:0 0 28px;font-size:13px;color:#667085;line-height:1.7;">Most orders ship within 1&#8211;2 business days. USPS Ground Advantage delivery is typically 2&#8211;5 days after USPS receives the package, though delivery times are not guaranteed.</p>
@@ -294,13 +314,35 @@ function textToHtml(str) {
 
 async function notifyNewOrder(order) {
   const total = (order.total_cents / 100).toFixed(2);
+  const isGift = !!order.is_gift;
+
+  const addrLines = [
+    order.shipping_address_line1,
+    order.shipping_address_line2 || null,
+    [order.shipping_city, order.shipping_state, order.shipping_postal_code].filter(Boolean).join(', '),
+    order.shipping_country || null,
+  ].filter(Boolean).map(escHtml).join('<br>');
+
+  const giftSection = isGift ? `
+    <tr><td colspan="2" style="padding:10px 0 4px"><hr style="border:none;border-top:1px solid #eee;margin:0"></td></tr>
+    <tr><td style="color:#92400e;font-weight:700;padding:3px 16px 3px 0" colspan="2">🎁 Gift Order</td></tr>
+    ${order.gift_recipient_name ? `<tr><td style="color:#667085;padding:3px 16px 3px 0">Gift For</td><td><strong>${escHtml(order.gift_recipient_name)}</strong></td></tr>` : ''}
+    ${order.gift_message ? `<tr><td style="color:#667085;padding:3px 16px 3px 0;vertical-align:top">Message</td><td style="font-style:italic">"${escHtml(order.gift_message)}"</td></tr>` : ''}
+  ` : '';
+
+  const subjectPrefix = isGift ? '🎁 Gift — ' : '';
+
   await sendOwnerNotification(
-    `New order ${order.order_number} — $${total}`,
-    `<p><strong>New paid order received!</strong></p>
-     <p>Order: ${order.order_number}<br>
-     Customer: ${order.customer_name} &lt;${order.customer_email}&gt;<br>
-     Total: $${total}</p>
-     <p><a href="https://kavanahpouch.com/admin/orders/${order.id}">View order in dashboard</a></p>`
+    `${subjectPrefix}New order ${order.order_number} — $${total}`,
+    `<table cellpadding="0" cellspacing="0" style="font-size:14px;line-height:1.7;border-collapse:collapse">
+       <tr><td colspan="2"><strong>New paid order received!</strong></td></tr>
+       <tr><td style="color:#667085;padding:3px 16px 3px 0;white-space:nowrap">Order</td><td><strong>${escHtml(order.order_number)}</strong></td></tr>
+       <tr><td style="color:#667085;padding:3px 16px 3px 0">Customer</td><td>${escHtml(order.customer_name || '')} &lt;<a href="mailto:${escHtml(order.customer_email)}">${escHtml(order.customer_email)}</a>&gt;</td></tr>
+       <tr><td style="color:#667085;padding:3px 16px 3px 0">Total</td><td><strong>$${escHtml(total)}</strong></td></tr>
+       <tr><td style="color:#667085;padding:3px 16px 3px 0;vertical-align:top">Ship To</td><td style="line-height:1.6">${addrLines || '—'}</td></tr>
+       ${giftSection}
+     </table>
+     <p style="margin-top:16px"><a href="https://kavanahpouch.com/admin/orders/${order.id}" style="background:#001f42;color:#d6a23a;padding:8px 18px;border-radius:999px;text-decoration:none;font-weight:700;">View order in dashboard →</a></p>`
   );
 }
 
