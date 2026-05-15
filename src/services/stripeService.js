@@ -3,7 +3,7 @@ const config = require('../config');
 
 const stripe = Stripe(config.stripe.secretKey);
 
-async function createCheckoutSession(priceKey, { visitorId, sessionId } = {}) {
+async function createCheckoutSession(priceKey, { visitorId, sessionId, isGift = false, giftRecipientName = null } = {}) {
   const priceId = config.stripe.prices[priceKey];
   if (!priceId) throw new Error(`Unknown priceKey: ${priceKey}`);
 
@@ -34,6 +34,8 @@ async function createCheckoutSession(priceKey, { visitorId, sessionId } = {}) {
       priceKey,
       anonymous_visitor_id: visitorId || '',
       session_id: sessionId || '',
+      is_gift: isGift ? 'true' : 'false',
+      gift_recipient_name: giftRecipientName || '',
     },
     success_url: `${config.appBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${config.appBaseUrl}/#buy`,

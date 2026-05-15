@@ -20,6 +20,10 @@ router.post(
     const { priceKey, _visitor_id, _session_id } = req.body;
     const visitorId = typeof _visitor_id === 'string' ? _visitor_id.slice(0, 128) : '';
     const sessionId = typeof _session_id === 'string' ? _session_id.slice(0, 128) : '';
+    const isGift = req.body.is_gift === 'true';
+    const giftRecipientName = isGift
+      ? String(req.body.gift_recipient_name || '').slice(0, 128).trim() || null
+      : null;
     const pouchesNeeded = config.stripe.pouchesPerPack[priceKey];
 
     try {
@@ -28,7 +32,7 @@ router.post(
         return res.status(409).json({ error: 'Out of stock', soldOut: true });
       }
 
-      const session = await createCheckoutSession(priceKey, { visitorId, sessionId });
+      const session = await createCheckoutSession(priceKey, { visitorId, sessionId, isGift, giftRecipientName });
       res.redirect(303, session.url);
     } catch (err) {
       next(err);

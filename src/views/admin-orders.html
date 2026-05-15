@@ -211,7 +211,7 @@
         return `
         <tr>
           <td style="text-align:center"><input type="checkbox" class="row-check" data-id="${o.id}" onchange="updateBulkBtn()"></td>
-          <td><strong style="font-size:.85rem">${o.order_number}</strong></td>
+          <td><strong style="font-size:.85rem">${o.order_number}</strong>${o.is_gift?' <span title="Gift order">🎁</span>':''}</td>
           <td style="white-space:nowrap">${fmtDate(o.created_at)}</td>
           <td>
             <div class="customer-cell">

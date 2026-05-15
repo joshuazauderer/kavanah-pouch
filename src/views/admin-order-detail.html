@@ -95,10 +95,11 @@
         ${saved?`<div style="grid-column:1/-1">${saved}</div>`:''}
         <div>
           <div class="card" style="margin-bottom:1.2rem">
-            <h2>Customer</h2>
+            <h2>Customer ${o.is_gift?'<span class="badge" style="background:#fef9c3;color:#92400e;font-size:.72rem;vertical-align:middle">🎁 Gift Order</span>':''}</h2>
             <div class="field"><span class="k">Name</span><span class="v">${f(o.customer_name)}</span></div>
             <div class="field"><span class="k">Email</span><span class="v">${f(o.customer_email)}</span></div>
             <div class="field"><span class="k">Phone</span><span class="v">${f(o.phone)}</span></div>
+            ${o.gift_recipient_name?`<div class="field"><span class="k">Gift For</span><span class="v" style="color:#92400e;font-weight:700">🎁 ${f(o.gift_recipient_name)}</span></div>`:''}
           </div>
           <div class="card" style="margin-bottom:1.2rem">
             <h2>Shipping Address</h2>

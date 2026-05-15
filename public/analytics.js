@@ -198,7 +198,9 @@
       form.addEventListener('submit', function () {
         var priceKeyInput = form.querySelector('input[name="priceKey"]');
         var pack = priceKeyInput ? priceKeyInput.value : '';
-        track('checkout_started', { pack: pack });
+        var isGiftInput = form.querySelector('input[name="is_gift"]');
+        var isGift = isGiftInput ? isGiftInput.value === 'true' : false;
+        track('checkout_started', { pack: pack, is_gift: isGift });
       });
     });
   }

@@ -938,6 +938,50 @@ details p { margin: 0.75rem 0 0; color: var(--muted); }
   margin-top: 1.2rem;
 }
 
+/* ── Gift option on pricing cards ─────────────────────────────── */
+.gift-toggle {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin: .75rem 0 0;
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+}
+.gift-toggle input[type="checkbox"] {
+  accent-color: var(--gold);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.gift-fields {
+  display: none;
+  margin-top: .6rem;
+}
+.gift-fields.visible {
+  display: block;
+}
+.gift-fields input {
+  width: 100%;
+  padding: .55rem .75rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font: inherit;
+  font-size: .88rem;
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.gift-fields input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(214,162,58,.18);
+}
+.gift-fields input::placeholder { color: #aab0bc; }
+
 /* ── Responsive: bulk pricing grid ────────────────────────────── */
 @media (max-width: 1024px) {
   .bulk-pricing-grid {

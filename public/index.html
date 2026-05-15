@@ -217,6 +217,13 @@
             <p class="promo-note">🎉 Launch offer: use code <strong>DAVEN299</strong> for $2.99 off. Limited to the first 30 single-pouch orders.</p>
             <form action="/api/checkout" method="POST">
               <input type="hidden" name="priceKey" value="one_pouch" />
+              <input type="hidden" name="is_gift" value="false" />
+              <label class="gift-toggle">
+                <input type="checkbox" onchange="toggleGift(this)"> 🎁 This is a gift
+              </label>
+              <div class="gift-fields">
+                <input type="text" name="gift_recipient_name" placeholder="Recipient's name" maxlength="128" autocomplete="off" />
+              </div>
               <button class="button button-dark full" type="submit">Buy 1 Pouch</button>
             </form>
           </article>
@@ -227,6 +234,13 @@
             <p class="price-shipping">+ $4.95 shipping</p>
             <form action="/api/checkout" method="POST">
               <input type="hidden" name="priceKey" value="two_pack" />
+              <input type="hidden" name="is_gift" value="false" />
+              <label class="gift-toggle">
+                <input type="checkbox" onchange="toggleGift(this)"> 🎁 This is a gift
+              </label>
+              <div class="gift-fields">
+                <input type="text" name="gift_recipient_name" placeholder="Recipient's name" maxlength="128" autocomplete="off" />
+              </div>
               <button class="button button-dark full" type="submit">Buy 2-Pack</button>
             </form>
           </article>
@@ -238,6 +252,13 @@
             <p class="price-shipping free-shipping">Free shipping</p>
             <form action="/api/checkout" method="POST">
               <input type="hidden" name="priceKey" value="three_pack" />
+              <input type="hidden" name="is_gift" value="false" />
+              <label class="gift-toggle">
+                <input type="checkbox" onchange="toggleGift(this)"> 🎁 This is a gift
+              </label>
+              <div class="gift-fields">
+                <input type="text" name="gift_recipient_name" placeholder="Recipient's name" maxlength="128" autocomplete="off" />
+              </div>
               <button class="button button-gold full" type="submit">Buy 3-Pack</button>
             </form>
           </article>
@@ -576,6 +597,24 @@
     </div>
   </footer>
 
+  <script>
+    // Gift option toggle
+    function toggleGift(checkbox) {
+      var form = checkbox.closest('form');
+      var giftFields = form.querySelector('.gift-fields');
+      var isGiftInput = form.querySelector('input[name="is_gift"]');
+      var nameInput = form.querySelector('input[name="gift_recipient_name"]');
+      if (checkbox.checked) {
+        giftFields.classList.add('visible');
+        isGiftInput.value = 'true';
+        nameInput.focus();
+      } else {
+        giftFields.classList.remove('visible');
+        isGiftInput.value = 'false';
+        nameInput.value = '';
+      }
+    }
+  </script>
   <script>
     // Mobile nav
     const menuButton = document.querySelector('.mobile-menu-button');

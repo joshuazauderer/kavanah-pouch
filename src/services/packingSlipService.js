@@ -35,6 +35,9 @@ function buildAddress(o) {
 }
 
 function renderSlip(order, includePrices) {
+  // Gift orders always hide prices, regardless of the admin toggle
+  if (order.is_gift) includePrices = false;
+
   const items = (order.items || []);
 
   const itemRows = items.map(i => {
@@ -73,6 +76,7 @@ function renderSlip(order, includePrices) {
         <div class="slip-section">
           <div class="section-label">Ship To</div>
           <div class="address">${buildAddress(order)}</div>
+          ${order.is_gift && order.gift_recipient_name ? `<div class="gift-recipient">🎁 Gift for: <strong>${esc(order.gift_recipient_name)}</strong></div>` : ''}
         </div>
 
         <div class="slip-section">
@@ -239,6 +243,7 @@ function renderPackingSlipDocument(orders, includePrices = true) {
     }
 
     .address { font-size: 12px; line-height: 1.65; }
+    .gift-recipient { font-size: 11px; margin-top: .4rem; color: #444; }
 
     /* ── Items table ─────────────────────────────────────────────────────── */
     .items-table {
